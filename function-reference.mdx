@@ -1,0 +1,758 @@
+---
+title: "Function Reference"
+sidebarTitle: "Functions"
+description: "Complete reference for all public functions, methods, and utilities in the Sim ecosystem"
+---
+
+This reference documents all public functions available in the Sim APIs, IDX framework, and SDK libraries. Each function includes detailed parameters, return types, and practical examples.
+
+## Navigation
+
+<CardGroup cols={3}>
+  <Card icon="code" title="API Functions" href="#api-functions">
+    Direct API interaction functions
+  </Card>
+  <Card icon="hammer" title="IDX Functions" href="#idx-functions">
+    Blockchain indexing framework functions
+  </Card>
+  <Card icon="cube" title="Utility Functions" href="#utility-functions">
+    Helper functions and utilities
+  </Card>
+</CardGroup>
+
+---
+
+## API Functions
+
+### EVM API Functions
+
+#### `getEvmBalances(address, options?)`
+
+Retrieves token balances for an EVM address across multiple chains.
+
+**Parameters:**
+- `address` (string): Wallet address to query
+- `options` (object, optional): Query options
+  - `chainIds` (string[]): Array of chain IDs or names
+  - `tokens` (string[]): Filter by specific token addresses
+  - `limit` (number): Maximum results (default: 100, max: 1000)
+  - `offset` (string): Pagination cursor
+
+**Returns:** `Promise<BalancesResponse>`
+
+**Example:**
+```typescript
+// Basic usage
+const balances = await getEvmBalances('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
+
+// With filtering
+const balances = await getEvmBalances('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  chainIds: ['ethereum', 'polygon'],
+  limit: 50
+});
+
+// Pagination
+let allBalances = [];
+let offset = null;
+do {
+  const response = await getEvmBalances('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+    offset: offset,
+    limit: 100
+  });
+  allBalances.push(...response.balances);
+  offset = response.next_offset;
+} while (offset);
+```
+
+#### `getEvmActivity(address, options?)`
+
+Retrieves real-time activity feed for an EVM address.
+
+**Parameters:**
+- `address` (string): Wallet address to query
+- `options` (object, optional): Query options
+  - `chainIds` (string[]): Filter by chains
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+  - `startTime` (string): ISO 8601 timestamp filter
+  - `endTime` (string): ISO 8601 timestamp filter
+
+**Returns:** `Promise<ActivityResponse>`
+
+**Example:**
+```typescript
+// Recent activity
+const activity = await getEvmActivity('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  limit: 20
+});
+
+// Filtered by time range
+const activity = await getEvmActivity('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  startTime: '2023-01-01T00:00:00Z',
+  endTime: '2023-12-31T23:59:59Z',
+  chainIds: ['ethereum']
+});
+```
+
+#### `getEvmTransactions(address, options?)`
+
+Retrieves detailed transaction information for an EVM address.
+
+**Parameters:**
+- `address` (string): Wallet address to query
+- `options` (object, optional): Query options
+  - `chainIds` (string[]): Filter by chains
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+  - `txType` (string): Filter by transaction type
+
+**Returns:** `Promise<TransactionsResponse>`
+
+**Example:**
+```typescript
+const transactions = await getEvmTransactions('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  chainIds: ['ethereum'],
+  limit: 100
+});
+```
+
+#### `getEvmCollectibles(address, options?)`
+
+Retrieves NFT and collectible balances with metadata.
+
+**Parameters:**
+- `address` (string): Wallet address to query
+- `options` (object, optional): Query options
+  - `chainIds` (string[]): Filter by chains
+  - `tokenStandard` (string): Filter by ERC721 or ERC1155
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+
+**Returns:** `Promise<CollectiblesResponse>`
+
+**Example:**
+```typescript
+// All collectibles
+const collectibles = await getEvmCollectibles('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
+
+// Only ERC721 NFTs
+const nfts = await getEvmCollectibles('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  tokenStandard: 'ERC721'
+});
+```
+
+#### `getEvmTokenInfo(tokenAddress, chainIds)`
+
+Retrieves detailed information about specific tokens.
+
+**Parameters:**
+- `tokenAddress` (string): Token contract address or 'native'
+- `chainIds` (string): Chain IDs to query (required)
+
+**Returns:** `Promise<TokenInfoResponse>`
+
+**Example:**
+```typescript
+// Get USDC info on multiple chains
+const tokenInfo = await getEvmTokenInfo(
+  '0xa0b86a33e6ba4d8a6c81ca24c4f05d5c8f5b6f2e',
+  'ethereum,polygon,arbitrum'
+);
+
+// Get native token info
+const ethInfo = await getEvmTokenInfo('native', 'ethereum');
+```
+
+#### `getEvmTokenHolders(tokenAddress, options?)`
+
+Retrieves holders of a specific token.
+
+**Parameters:**
+- `tokenAddress` (string): Token contract address
+- `options` (object, optional): Query options
+  - `chainId` (string): Specific chain to query
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+
+**Returns:** `Promise<TokenHoldersResponse>`
+
+### SVM API Functions
+
+#### `getSvmBalances(address, options?)`
+
+Retrieves token balances for a Solana address.
+
+**Parameters:**
+- `address` (string): Solana wallet address
+- `options` (object, optional): Query options
+  - `chains` (string[]): Filter by chains
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+
+**Returns:** `Promise<SvmBalancesResponse>`
+
+**Example:**
+```typescript
+const balances = await getSvmBalances('86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY');
+```
+
+#### `getSvmTransactions(address, options?)`
+
+Retrieves transaction history for a Solana address.
+
+**Parameters:**
+- `address` (string): Solana wallet address
+- `options` (object, optional): Query options
+  - `limit` (number): Maximum results
+  - `offset` (string): Pagination cursor
+
+**Returns:** `Promise<SvmTransactionsResponse>`
+
+---
+
+## IDX Functions
+
+### CLI Functions
+
+#### `sim.init(options?)`
+
+Initializes a new Sim IDX application.
+
+**Parameters:**
+- `options` (object, optional): Initialization options
+  - `template` (string): Template name (default: 'sample')
+  - `directory` (string): Target directory
+
+**Example:**
+```bash
+# Default template
+sim init
+
+# Specific template
+sim init --template=contract-decoder
+
+# Custom directory
+mkdir my-indexer && cd my-indexer && sim init
+```
+
+#### `sim.build()`
+
+Compiles Solidity contracts using Foundry.
+
+**Example:**
+```bash
+sim build
+```
+
+#### `sim.test()`
+
+Runs Solidity tests for listener contracts.
+
+**Example:**
+```bash
+sim test
+```
+
+#### `sim.authenticate(apiKey)`
+
+Sets up API key authentication.
+
+**Parameters:**
+- `apiKey` (string): Your Sim IDX API key
+
+**Example:**
+```bash
+sim authenticate
+# Then paste your API key when prompted
+```
+
+#### `sim.listeners.evaluate(options)`
+
+Tests listener contracts against blockchain data.
+
+**Parameters:**
+- `options` (object): Evaluation options
+  - `startBlock` (number): Starting block number
+  - `endBlock` (number, optional): Ending block number
+  - `chainId` (number): Chain ID to evaluate
+
+**Example:**
+```bash
+# Single block
+sim listeners evaluate --start-block 22757345 --chain-id 1
+
+# Block range
+sim listeners evaluate --start-block 22757345 --end-block 22757350 --chain-id 1
+```
+
+### Framework Functions
+
+#### `App.create(options?)`
+
+Creates a new Sim IDX application instance.
+
+**Parameters:**
+- `options` (object, optional): Application configuration
+  - `cors` (object): CORS configuration
+  - `middleware` (array): Custom middleware
+
+**Returns:** `HonoApp`
+
+**Example:**
+```typescript
+import { App } from "sim-idx";
+
+const app = App.create({
+  cors: {
+    origin: ['https://example.com'],
+    credentials: true
+  }
+});
+```
+
+#### `db.client(context)`
+
+Gets a database client instance for the current request.
+
+**Parameters:**
+- `context` (HonoContext): Request context from Hono
+
+**Returns:** `DrizzleClient`
+
+**Example:**
+```typescript
+app.get('/api/data', async (c) => {
+  const client = db.client(c);
+  const results = await client.select().from(myTable);
+  return c.json({ results });
+});
+```
+
+#### `db.schema.generate(listenerContract)`
+
+Generates database schema from listener contract events.
+
+**Parameters:**
+- `listenerContract` (string): Path to compiled listener contract
+
+**Returns:** `SchemaDefinition`
+
+### Listener Functions
+
+#### `Listener.process(contractAddress, data)`
+
+Main processing function for blockchain events.
+
+**Parameters:**
+- `contractAddress` (address): Contract that emitted the event
+- `data` (bytes): Raw event data
+
+**Example:**
+```solidity
+contract MyListener is Listener {
+    event ProcessedEvent(
+        address indexed contract_address,
+        uint256 block_number,
+        bytes32 data_hash
+    );
+    
+    function process(
+        address contractAddress,
+        bytes calldata data
+    ) external override {
+        // Decode event data
+        // Process business logic
+        // Emit structured event for database storage
+        emit ProcessedEvent(
+            contractAddress,
+            block.number,
+            keccak256(data)
+        );
+    }
+}
+```
+
+#### `Listener.filter(contractAddress)`
+
+Determines if a contract should be processed by this listener.
+
+**Parameters:**
+- `contractAddress` (address): Contract address to evaluate
+
+**Returns:** `bool`
+
+**Example:**
+```solidity
+function filter(address contractAddress) external view override returns (bool) {
+    // Only process Uniswap V3 Factory contracts
+    return contractAddress == 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+}
+```
+
+---
+
+## Utility Functions
+
+### Address Validation
+
+#### `isValidEvmAddress(address)`
+
+Validates an Ethereum-style address.
+
+**Parameters:**
+- `address` (string): Address to validate
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+const isValid = isValidEvmAddress('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
+// Returns: true
+
+const isInvalid = isValidEvmAddress('invalid-address');
+// Returns: false
+```
+
+#### `isValidSvmAddress(address)`
+
+Validates a Solana-style address.
+
+**Parameters:**
+- `address` (string): Address to validate
+
+**Returns:** `boolean`
+
+**Example:**
+```typescript
+const isValid = isValidSvmAddress('86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY');
+// Returns: true
+```
+
+### Chain Utilities
+
+#### `getChainInfo(chainId)`
+
+Gets information about a specific blockchain.
+
+**Parameters:**
+- `chainId` (string | number): Chain ID or name
+
+**Returns:** `ChainInfo`
+
+**Example:**
+```typescript
+const ethereum = getChainInfo('ethereum');
+// Returns: { id: 1, name: 'ethereum', displayName: 'Ethereum', ... }
+
+const polygon = getChainInfo(137);
+// Returns: { id: 137, name: 'polygon', displayName: 'Polygon', ... }
+```
+
+#### `getSupportedChains()`
+
+Gets list of all supported chains.
+
+**Returns:** `ChainInfo[]`
+
+**Example:**
+```typescript
+const chains = getSupportedChains();
+// Returns array of all supported blockchain networks
+```
+
+### Data Formatting
+
+#### `formatTokenAmount(amount, decimals)`
+
+Formats raw token amounts for display.
+
+**Parameters:**
+- `amount` (string): Raw token amount
+- `decimals` (number): Token decimal places
+
+**Returns:** `string`
+
+**Example:**
+```typescript
+const formatted = formatTokenAmount('1000000000000000000', 18);
+// Returns: '1.0'
+
+const withPrecision = formatTokenAmount('1234567890123456789', 18);
+// Returns: '1.234567890123456789'
+```
+
+#### `formatCurrency(amount, currency?)`
+
+Formats currency amounts for display.
+
+**Parameters:**
+- `amount` (number): Amount to format
+- `currency` (string, optional): Currency code (default: 'USD')
+
+**Returns:** `string`
+
+**Example:**
+```typescript
+const formatted = formatCurrency(1234.56);
+// Returns: '$1,234.56'
+
+const euros = formatCurrency(1234.56, 'EUR');
+// Returns: '€1,234.56'
+```
+
+#### `formatTimestamp(timestamp, format?)`
+
+Formats timestamps for display.
+
+**Parameters:**
+- `timestamp` (string | Date): Timestamp to format
+- `format` (string, optional): Format string
+
+**Returns:** `string`
+
+**Example:**
+```typescript
+const formatted = formatTimestamp('2023-11-07T05:31:56Z');
+// Returns: 'Nov 7, 2023 5:31 AM'
+
+const custom = formatTimestamp('2023-11-07T05:31:56Z', 'YYYY-MM-DD HH:mm');
+// Returns: '2023-11-07 05:31'
+```
+
+### Error Handling
+
+#### `handleApiError(error)`
+
+Standardized API error handler.
+
+**Parameters:**
+- `error` (Error | ApiError): Error to handle
+
+**Returns:** `StandardErrorResponse`
+
+**Example:**
+```typescript
+try {
+  const data = await getEvmBalances('invalid-address');
+} catch (error) {
+  const standardError = handleApiError(error);
+  console.error('API Error:', standardError.message);
+}
+```
+
+#### `retryWithBackoff(fn, options?)`
+
+Retry function with exponential backoff.
+
+**Parameters:**
+- `fn` (Function): Function to retry
+- `options` (object, optional): Retry configuration
+  - `maxRetries` (number): Maximum retry attempts (default: 3)
+  - `baseDelay` (number): Base delay in ms (default: 1000)
+  - `maxDelay` (number): Maximum delay in ms (default: 10000)
+
+**Returns:** `Promise<T>`
+
+**Example:**
+```typescript
+const data = await retryWithBackoff(
+  () => getEvmBalances('0x...'),
+  { maxRetries: 5, baseDelay: 500 }
+);
+```
+
+### Pagination Helpers
+
+#### `paginateAll(fetchFn, options?)`
+
+Automatically paginate through all results.
+
+**Parameters:**
+- `fetchFn` (Function): Function that returns paginated data
+- `options` (object, optional): Pagination options
+  - `maxPages` (number): Maximum pages to fetch
+  - `pageSize` (number): Items per page
+
+**Returns:** `Promise<T[]>`
+
+**Example:**
+```typescript
+const allBalances = await paginateAll(
+  (offset) => getEvmBalances('0x...', { offset, limit: 100 }),
+  { maxPages: 10 }
+);
+```
+
+#### `createPaginator(fetchFn)`
+
+Creates a paginator iterator for manual pagination.
+
+**Parameters:**
+- `fetchFn` (Function): Function that returns paginated data
+
+**Returns:** `AsyncIterator<T>`
+
+**Example:**
+```typescript
+const paginator = createPaginator(
+  (offset) => getEvmBalances('0x...', { offset })
+);
+
+for await (const page of paginator) {
+  console.log(`Found ${page.balances.length} balances`);
+  if (page.balances.length < 100) break; // Last page
+}
+```
+
+---
+
+## Type Definitions
+
+### API Response Types
+
+```typescript
+interface BalancesResponse {
+  balances: Balance[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Balance {
+  address: string;
+  amount: string;
+  chain: string;
+  decimals: number;
+  price_usd: number;
+  symbol: string;
+  value_usd: number;
+}
+
+interface ActivityResponse {
+  activities: Activity[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Activity {
+  tx_hash: string;
+  block_number: number;
+  timestamp: string;
+  chain: string;
+  activity_type: 'transfer' | 'swap' | 'mint' | 'burn' | 'contract_interaction';
+  from_address: string;
+  to_address: string;
+  value?: string;
+  token?: TokenInfo;
+  gas_used: string;
+  gas_price: string;
+}
+```
+
+### IDX Framework Types
+
+```typescript
+interface ListenerConfig {
+  name: string;
+  description: string;
+  abi: any[];
+  chains: number[];
+  contracts?: string[];
+}
+
+interface ChainInfo {
+  id: number;
+  name: string;
+  displayName: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+  rpcUrls: string[];
+  blockExplorerUrls: string[];
+}
+```
+
+---
+
+## Best Practices
+
+### Function Usage Guidelines
+
+1. **Error Handling**: Always wrap API calls in try-catch blocks
+2. **Type Safety**: Use TypeScript for better development experience
+3. **Rate Limiting**: Implement appropriate delays between requests
+4. **Pagination**: Use pagination for large datasets
+5. **Validation**: Validate inputs before making API calls
+
+### Performance Tips
+
+1. **Caching**: Cache frequently accessed data
+2. **Batch Requests**: Group related requests when possible
+3. **Lazy Loading**: Load data only when needed
+4. **Connection Pooling**: Reuse database connections in IDX apps
+
+### Security Considerations
+
+1. **API Key Management**: Store API keys securely
+2. **Input Sanitization**: Validate and sanitize all inputs
+3. **HTTPS Only**: Always use HTTPS for API requests
+4. **Access Control**: Implement proper access controls in IDX APIs
+
+---
+
+## Migration Guide
+
+### Upgrading from v0.x to v1.x
+
+Key changes in the v1 API:
+
+1. **Authentication**: Updated header format
+2. **Response Format**: Standardized response structure
+3. **Error Codes**: New error code system
+4. **Pagination**: Cursor-based pagination
+
+**Before (v0.x):**
+```typescript
+const response = await fetch('/api/balances/0x...', {
+  headers: { 'Authorization': 'Bearer ' + apiKey }
+});
+```
+
+**After (v1.x):**
+```typescript
+const response = await fetch('/v1/evm/balances/0x...', {
+  headers: { 'X-Sim-Api-Key': apiKey }
+});
+```
+
+### IDX Framework Updates
+
+1. **Listener Interface**: Updated process function signature
+2. **Database Schema**: Automatic schema generation
+3. **CLI Commands**: New command structure
+
+For detailed migration instructions, see the [Migration Guide](/migration).
+
+---
+
+## Community and Support
+
+<CardGroup cols={2}>
+  <Card icon="github" title="GitHub" href="https://github.com/duneanalytics">
+    Contribute to open source projects
+  </Card>
+  <Card icon="discord" title="Discord" href="https://discord.gg/dune">
+    Join our developer community
+  </Card>
+  <Card icon="book" title="Documentation" href="/api-reference">
+    Complete API reference
+  </Card>
+  <Card icon="life-ring" title="Support" href="/support">
+    Get help from our team
+  </Card>
+</CardGroup>

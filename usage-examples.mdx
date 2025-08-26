@@ -1,0 +1,1525 @@
+---
+title: "Usage Examples"
+sidebarTitle: "Examples"
+description: "Comprehensive usage examples for all Sim APIs, functions, and components with real-world implementations"
+---
+
+This guide provides practical, real-world examples for using Sim APIs, IDX framework components, and documentation elements. Each example includes complete code implementations, error handling, and best practices.
+
+## Navigation
+
+<CardGroup cols={3}>
+  <Card icon="ethernet" title="EVM API Examples" href="#evm-api-examples">
+    Real-world EVM blockchain data integration
+  </Card>
+  <Card icon="coins" title="SVM API Examples" href="#svm-api-examples">
+    Solana blockchain data implementations
+  </Card>
+  <Card icon="hammer" title="IDX Framework Examples" href="#idx-framework-examples">
+    Blockchain indexing and data processing
+  </Card>
+</CardGroup>
+
+---
+
+## EVM API Examples
+
+### Building a Portfolio Tracker
+
+Complete implementation of a multi-chain portfolio tracker using EVM APIs.
+
+#### Frontend React Component
+
+```tsx
+import React, { useState, useEffect } from 'react';
+
+interface Portfolio {
+  totalValueUsd: number;
+  balances: Balance[];
+  loading: boolean;
+  error?: string;
+}
+
+interface Balance {
+  address: string;
+  amount: string;
+  chain: string;
+  decimals: number;
+  price_usd: number;
+  symbol: string;
+  value_usd: number;
+}
+
+const PortfolioTracker: React.FC<{ walletAddress: string }> = ({ walletAddress }) => {
+  const [portfolio, setPortfolio] = useState<Portfolio>({
+    totalValueUsd: 0,
+    balances: [],
+    loading: true
+  });
+
+  useEffect(() => {
+    fetchPortfolio();
+  }, [walletAddress]);
+
+  const fetchPortfolio = async () => {
+    setPortfolio(prev => ({ ...prev, loading: true, error: undefined }));
+    
+    try {
+      const response = await fetch(`/api/portfolio/${walletAddress}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      setPortfolio({
+        totalValueUsd: data.totalValueUsd,
+        balances: data.balances,
+        loading: false
+      });
+    } catch (error) {
+      setPortfolio(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch portfolio'
+      }));
+    }
+  };
+
+  if (portfolio.loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span className="ml-2">Loading portfolio...</span>
+      </div>
+    );
+  }
+
+  if (portfolio.error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 className="text-red-800 font-medium">Error Loading Portfolio</h3>
+        <p className="text-red-600 mt-1">{portfolio.error}</p>
+        <button 
+          onClick={fetchPortfolio}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Portfolio Summary */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+        <h2 className="text-2xl font-bold mb-2">Total Portfolio Value</h2>
+        <p className="text-3xl font-bold">
+          ${portfolio.totalValueUsd.toLocaleString('en-US', { 
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2 
+          })}
+        </p>
+        <p className="text-blue-100 mt-1">
+          Across {new Set(portfolio.balances.map(b => b.chain)).size} chains
+        </p>
+      </div>
+
+      {/* Token List */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Token Balances</h3>
+        </div>
+        
+        <div className="divide-y divide-gray-200">
+          {portfolio.balances
+            .filter(balance => balance.value_usd > 0.01) // Filter dust
+            .sort((a, b) => b.value_usd - a.value_usd) // Sort by value
+            .map((balance, index) => (
+              <TokenRow key={`${balance.chain}-${balance.address}-${index}`} balance={balance} />
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TokenRow: React.FC<{ balance: Balance }> = ({ balance }) => {
+  const formatAmount = (amount: string, decimals: number) => {
+    const num = parseFloat(amount) / Math.pow(10, decimals);
+    if (num < 0.001) return '< 0.001';
+    if (num < 1) return num.toFixed(6);
+    if (num < 1000) return num.toFixed(3);
+    return num.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+
+  return (
+    <div className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
+      <div className="flex items-center space-x-4">
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+          <span className="text-sm font-medium text-gray-600">
+            {balance.symbol.slice(0, 2).toUpperCase()}
+          </span>
+        </div>
+        
+        <div>
+          <div className="text-sm font-medium text-gray-900">
+            {balance.symbol}
+          </div>
+          <div className="text-sm text-gray-500 capitalize">
+            {balance.chain}
+          </div>
+        </div>
+      </div>
+      
+      <div className="text-right">
+        <div className="text-sm font-medium text-gray-900">
+          {formatAmount(balance.amount, balance.decimals)} {balance.symbol}
+        </div>
+        <div className="text-sm text-gray-500">
+          ${balance.value_usd.toLocaleString('en-US', { 
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2 
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PortfolioTracker;
+```
+
+#### Backend Express.js API
+
+```javascript
+import express from 'express';
+import fetch from 'node-fetch';
+import NodeCache from 'node-cache';
+
+const app = express();
+const cache = new NodeCache({ stdTTL: 300 }); // 5 minute cache
+
+const SIM_API_KEY = process.env.SIM_API_KEY;
+const SIM_BASE_URL = 'https://api.sim.dune.com';
+
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000,
+  maxDelay: 10000
+};
+
+// Retry with exponential backoff
+async function retryWithBackoff(fn, config = RETRY_CONFIG) {
+  let lastError;
+  
+  for (let i = 0; i <= config.maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      if (i === config.maxRetries) break;
+      
+      const delay = Math.min(
+        config.baseDelay * Math.pow(2, i),
+        config.maxDelay
+      );
+      
+      console.log(`Attempt ${i + 1} failed, retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Fetch balances with error handling and caching
+async function fetchBalances(walletAddress) {
+  const cacheKey = `balances-${walletAddress}`;
+  const cached = cache.get(cacheKey);
+  
+  if (cached) {
+    return cached;
+  }
+
+  const fetchData = async () => {
+    const response = await fetch(
+      `${SIM_BASE_URL}/v1/evm/balances/${walletAddress}?limit=1000`,
+      {
+        headers: {
+          'X-Sim-Api-Key': SIM_API_KEY,
+          'User-Agent': 'Portfolio-Tracker/1.0'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded');
+      }
+      if (response.status === 401) {
+        throw new Error('Invalid API key');
+      }
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  try {
+    const data = await retryWithBackoff(fetchData);
+    
+    // Cache successful response
+    cache.set(cacheKey, data);
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch balances:', error);
+    throw error;
+  }
+}
+
+// Portfolio endpoint
+app.get('/api/portfolio/:address', async (req, res) => {
+  try {
+    const { address } = req.params;
+    
+    // Validate address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return res.status(400).json({
+        error: 'Invalid wallet address format'
+      });
+    }
+
+    const balancesData = await fetchBalances(address);
+    
+    // Calculate total portfolio value
+    const totalValueUsd = balancesData.balances.reduce(
+      (sum, balance) => sum + balance.value_usd,
+      0
+    );
+
+    // Filter and sort balances
+    const significantBalances = balancesData.balances
+      .filter(balance => balance.value_usd >= 0.01)
+      .sort((a, b) => b.value_usd - a.value_usd);
+
+    res.json({
+      totalValueUsd,
+      balances: significantBalances,
+      chainCount: new Set(balancesData.balances.map(b => b.chain)).size,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Portfolio API error:', error);
+    
+    res.status(500).json({
+      error: 'Failed to fetch portfolio data',
+      message: error.message
+    });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Portfolio API listening on port 3000');
+});
+```
+
+### Activity Feed Implementation
+
+Real-time activity feed showing wallet transactions across chains.
+
+```typescript
+interface ActivityFeed {
+  activities: Activity[];
+  loading: boolean;
+  hasMore: boolean;
+  error?: string;
+}
+
+interface Activity {
+  tx_hash: string;
+  block_number: number;
+  timestamp: string;
+  chain: string;
+  activity_type: string;
+  from_address: string;
+  to_address: string;
+  value?: string;
+  token?: {
+    symbol: string;
+    decimals: number;
+    address: string;
+  };
+}
+
+const ActivityFeed: React.FC<{ walletAddress: string }> = ({ walletAddress }) => {
+  const [feed, setFeed] = useState<ActivityFeed>({
+    activities: [],
+    loading: true,
+    hasMore: true
+  });
+  const [offset, setOffset] = useState<string | null>(null);
+
+  const loadActivities = async (reset = false) => {
+    if (!reset && (!feed.hasMore || feed.loading)) return;
+
+    setFeed(prev => ({ ...prev, loading: true }));
+
+    try {
+      const params = new URLSearchParams({
+        limit: '50',
+        ...(offset && !reset ? { offset } : {})
+      });
+
+      const response = await fetch(
+        `/api/activity/${walletAddress}?${params}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch activities: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      setFeed(prev => ({
+        activities: reset ? data.activities : [...prev.activities, ...data.activities],
+        loading: false,
+        hasMore: !!data.next_offset,
+        error: undefined
+      }));
+
+      setOffset(data.next_offset);
+
+    } catch (error) {
+      setFeed(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load activities'
+      }));
+    }
+  };
+
+  useEffect(() => {
+    loadActivities(true);
+  }, [walletAddress]);
+
+  const formatActivityType = (type: string) => {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'transfer': return '↔️';
+      case 'swap': return '🔄';
+      case 'mint': return '🆕';
+      case 'burn': return '🔥';
+      default: return '📝';
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium">Recent Activity</h3>
+        <button 
+          onClick={() => loadActivities(true)}
+          className="text-blue-600 hover:text-blue-800"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {feed.error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">{feed.error}</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {feed.activities.map((activity) => (
+          <ActivityItem 
+            key={`${activity.tx_hash}-${activity.block_number}`} 
+            activity={activity} 
+            walletAddress={walletAddress}
+          />
+        ))}
+      </div>
+
+      {feed.hasMore && (
+        <button
+          onClick={() => loadActivities()}
+          disabled={feed.loading}
+          className="w-full py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+        >
+          {feed.loading ? 'Loading...' : 'Load More'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const ActivityItem: React.FC<{ activity: Activity; walletAddress: string }> = ({ 
+  activity, 
+  walletAddress 
+}) => {
+  const isIncoming = activity.to_address.toLowerCase() === walletAddress.toLowerCase();
+  const direction = isIncoming ? 'Received' : 'Sent';
+  const directionColor = isIncoming ? 'text-green-600' : 'text-red-600';
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-3">
+          <span className="text-2xl">{getActivityIcon(activity.activity_type)}</span>
+          
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-900">
+                {formatActivityType(activity.activity_type)}
+              </span>
+              <span className={`text-sm font-medium ${directionColor}`}>
+                {direction}
+              </span>
+            </div>
+            
+            <div className="text-sm text-gray-500 mt-1">
+              {activity.token ? (
+                <span>
+                  {(parseFloat(activity.value || '0') / Math.pow(10, activity.token.decimals)).toFixed(4)} {activity.token.symbol}
+                </span>
+              ) : (
+                <span>Contract Interaction</span>
+              )}
+            </div>
+            
+            <div className="text-xs text-gray-400 mt-1 capitalize">
+              {activity.chain} • {new Date(activity.timestamp).toLocaleString()}
+            </div>
+          </div>
+        </div>
+        
+        <a
+          href={`https://etherscan.io/tx/${activity.tx_hash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          View →
+        </a>
+      </div>
+    </div>
+  );
+};
+```
+
+### NFT Gallery Implementation
+
+Complete NFT gallery with metadata and filtering.
+
+```typescript
+import React, { useState, useEffect } from 'react';
+
+interface NFTGallery {
+  collectibles: Collectible[];
+  loading: boolean;
+  error?: string;
+  filters: {
+    chain: string;
+    standard: string;
+  };
+}
+
+interface Collectible {
+  contract_address: string;
+  token_id: string;
+  token_standard: 'ERC721' | 'ERC1155';
+  chain: string;
+  balance: string;
+  metadata?: {
+    name?: string;
+    description?: string;
+    image?: string;
+    attributes?: Array<{
+      trait_type: string;
+      value: string | number;
+    }>;
+  };
+}
+
+const NFTGallery: React.FC<{ walletAddress: string }> = ({ walletAddress }) => {
+  const [gallery, setGallery] = useState<NFTGallery>({
+    collectibles: [],
+    loading: true,
+    filters: { chain: 'all', standard: 'all' }
+  });
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const fetchNFTs = async () => {
+    setGallery(prev => ({ ...prev, loading: true, error: undefined }));
+
+    try {
+      const params = new URLSearchParams({
+        limit: '100',
+        ...(gallery.filters.chain !== 'all' && { chain_ids: gallery.filters.chain }),
+        ...(gallery.filters.standard !== 'all' && { token_standard: gallery.filters.standard })
+      });
+
+      const response = await fetch(`/api/nfts/${walletAddress}?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch NFTs');
+      }
+
+      const data = await response.json();
+
+      setGallery(prev => ({
+        ...prev,
+        collectibles: data.collectibles,
+        loading: false
+      }));
+
+    } catch (error) {
+      setGallery(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load NFTs'
+      }));
+    }
+  };
+
+  useEffect(() => {
+    fetchNFTs();
+  }, [walletAddress, gallery.filters]);
+
+  const updateFilter = (key: keyof typeof gallery.filters, value: string) => {
+    setGallery(prev => ({
+      ...prev,
+      filters: { ...prev.filters, [key]: value }
+    }));
+  };
+
+  const chains = [...new Set(gallery.collectibles.map(nft => nft.chain))];
+
+  if (gallery.loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Array(8).fill(0).map((_, i) => (
+          <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (gallery.error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600">{gallery.error}</p>
+        <button 
+          onClick={fetchNFTs}
+          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Filters and Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <select
+            value={gallery.filters.chain}
+            onChange={(e) => updateFilter('chain', e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="all">All Chains</option>
+            {chains.map(chain => (
+              <option key={chain} value={chain} className="capitalize">
+                {chain}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={gallery.filters.standard}
+            onChange={(e) => updateFilter('standard', e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2"
+          >
+            <option value="all">All Standards</option>
+            <option value="ERC721">ERC721</option>
+            <option value="ERC1155">ERC1155</option>
+          </select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            Grid
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+          >
+            List
+          </button>
+        </div>
+      </div>
+
+      {/* NFT Display */}
+      {gallery.collectibles.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No NFTs found with current filters</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {gallery.collectibles.map((nft, index) => (
+            <NFTCard key={`${nft.contract_address}-${nft.token_id}-${index}`} nft={nft} />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {gallery.collectibles.map((nft, index) => (
+            <NFTListItem key={`${nft.contract_address}-${nft.token_id}-${index}`} nft={nft} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const NFTCard: React.FC<{ nft: Collectible }> = ({ nft }) => {
+  const [imageError, setImageError] = useState(false);
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="aspect-square bg-gray-100 relative">
+        {nft.metadata?.image && !imageError ? (
+          <img
+            src={nft.metadata.image}
+            alt={nft.metadata.name || `Token ${nft.token_id}`}
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <span className="text-4xl">🖼️</span>
+          </div>
+        )}
+        
+        {nft.token_standard === 'ERC1155' && nft.balance !== '1' && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+            x{nft.balance}
+          </div>
+        )}
+      </div>
+      
+      <div className="p-3">
+        <h4 className="font-medium text-sm truncate">
+          {nft.metadata?.name || `Token #${nft.token_id}`}
+        </h4>
+        <p className="text-xs text-gray-500 capitalize mt-1">
+          {nft.chain} • {nft.token_standard}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const NFTListItem: React.FC<{ nft: Collectible }> = ({ nft }) => {
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 flex items-center space-x-4 hover:bg-gray-50">
+      <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0">
+        {nft.metadata?.image ? (
+          <img
+            src={nft.metadata.image}
+            alt={nft.metadata.name || `Token ${nft.token_id}`}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            🖼️
+          </div>
+        )}
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-gray-900 truncate">
+          {nft.metadata?.name || `Token #${nft.token_id}`}
+        </h4>
+        <p className="text-sm text-gray-500">
+          {nft.metadata?.description?.slice(0, 100)}
+          {nft.metadata?.description && nft.metadata.description.length > 100 && '...'}
+        </p>
+        <div className="flex items-center space-x-4 mt-2">
+          <span className="text-xs text-gray-400 capitalize">{nft.chain}</span>
+          <span className="text-xs text-gray-400">{nft.token_standard}</span>
+          {nft.balance !== '1' && (
+            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+              Quantity: {nft.balance}
+            </span>
+          )}
+        </div>
+      </div>
+      
+      <div className="text-xs text-gray-400">
+        #{nft.token_id}
+      </div>
+    </div>
+  );
+};
+
+export default NFTGallery;
+```
+
+---
+
+## SVM API Examples
+
+### Solana Wallet Integration
+
+Complete Solana wallet implementation with balance tracking.
+
+```typescript
+import React, { useState, useEffect } from 'react';
+
+interface SolanaWallet {
+  balances: SolanaBalance[];
+  totalSol: number;
+  loading: boolean;
+  error?: string;
+}
+
+interface SolanaBalance {
+  mint: string;
+  symbol: string;
+  amount: string;
+  decimals: number;
+  value_usd?: number;
+}
+
+const SolanaWallet: React.FC<{ publicKey: string }> = ({ publicKey }) => {
+  const [wallet, setWallet] = useState<SolanaWallet>({
+    balances: [],
+    totalSol: 0,
+    loading: true
+  });
+
+  const fetchSolanaData = async () => {
+    setWallet(prev => ({ ...prev, loading: true, error: undefined }));
+
+    try {
+      const response = await fetch(`/api/solana/balances/${publicKey}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch Solana data');
+      }
+
+      const data = await response.json();
+
+      setWallet({
+        balances: data.balances,
+        totalSol: data.balances.find(b => b.mint === 'native')?.amount || 0,
+        loading: false
+      });
+
+    } catch (error) {
+      setWallet(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load wallet'
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (publicKey) {
+      fetchSolanaData();
+    }
+  }, [publicKey]);
+
+  const formatSolAmount = (amount: string, decimals: number = 9) => {
+    const num = parseFloat(amount) / Math.pow(10, decimals);
+    return num.toFixed(4);
+  };
+
+  if (wallet.loading) {
+    return <div className="animate-pulse">Loading Solana wallet...</div>;
+  }
+
+  if (wallet.error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">{wallet.error}</p>
+        <button 
+          onClick={fetchSolanaData}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* SOL Balance */}
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
+        <h2 className="text-xl font-bold mb-2">SOL Balance</h2>
+        <p className="text-2xl font-bold">
+          {formatSolAmount(wallet.totalSol.toString())} SOL
+        </p>
+      </div>
+
+      {/* Token List */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium">SPL Tokens</h3>
+        </div>
+        
+        <div className="divide-y divide-gray-200">
+          {wallet.balances
+            .filter(balance => balance.mint !== 'native')
+            .map((balance, index) => (
+              <div key={`${balance.mint}-${index}`} className="px-6 py-4 flex justify-between">
+                <div>
+                  <div className="font-medium">{balance.symbol}</div>
+                  <div className="text-sm text-gray-500">{balance.mint}</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium">
+                    {formatSolAmount(balance.amount, balance.decimals)}
+                  </div>
+                  {balance.value_usd && (
+                    <div className="text-sm text-gray-500">
+                      ${balance.value_usd.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SolanaWallet;
+```
+
+---
+
+## IDX Framework Examples
+
+### Custom Contract Listener
+
+Complete implementation of a custom contract listener for indexing specific events.
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "sim-idx/Listener.sol";
+
+contract DEXTradeListener is Listener {
+    // Event to capture trade data
+    event TradeExecuted(
+        address indexed trader,
+        address indexed tokenIn,
+        address indexed tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 timestamp,
+        address dexContract,
+        uint256 blockNumber
+    );
+    
+    // Event for liquidity changes
+    event LiquidityChanged(
+        address indexed pool,
+        address indexed provider,
+        uint256 amount0,
+        uint256 amount1,
+        bool isAdd,
+        uint256 timestamp
+    );
+
+    // Target DEX contract addresses
+    mapping(address => bool) public supportedDEXes;
+    
+    constructor() {
+        // Add supported DEX contracts
+        supportedDEXes[0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D] = true; // Uniswap V2 Router
+        supportedDEXes[0xE592427A0AEce92De3Edee1F18E0157C05861564] = true; // Uniswap V3 Router
+    }
+
+    function process(
+        address contractAddress,
+        bytes calldata data
+    ) external override {
+        // Only process supported DEX contracts
+        if (!supportedDEXes[contractAddress]) {
+            return;
+        }
+
+        // Decode the transaction data
+        (bytes4 selector, bytes memory params) = abi.decode(data, (bytes4, bytes));
+        
+        if (selector == bytes4(keccak256("swapExactTokensForTokens(uint256,uint256,address[],address,uint256)"))) {
+            _processSwap(contractAddress, params);
+        } else if (selector == bytes4(keccak256("addLiquidity(address,address,uint256,uint256,uint256,uint256,address,uint256)"))) {
+            _processLiquidityAdd(contractAddress, params);
+        } else if (selector == bytes4(keccak256("removeLiquidity(address,address,uint256,uint256,uint256,address,uint256)"))) {
+            _processLiquidityRemove(contractAddress, params);
+        }
+    }
+
+    function _processSwap(address dexContract, bytes memory params) internal {
+        (
+            uint256 amountIn,
+            uint256 amountOutMin,
+            address[] memory path,
+            address to,
+            uint256 deadline
+        ) = abi.decode(params, (uint256, uint256, address[], address, uint256));
+
+        if (path.length >= 2) {
+            emit TradeExecuted(
+                to,
+                path[0],
+                path[path.length - 1],
+                amountIn,
+                amountOutMin, // This would be the minimum, actual amount would need to be fetched from event logs
+                block.timestamp,
+                dexContract,
+                block.number
+            );
+        }
+    }
+
+    function _processLiquidityAdd(address dexContract, bytes memory params) internal {
+        (
+            address tokenA,
+            address tokenB,
+            uint256 amountADesired,
+            uint256 amountBDesired,
+            ,
+            ,
+            address to,
+        ) = abi.decode(params, (address, address, uint256, uint256, uint256, uint256, address, uint256));
+
+        emit LiquidityChanged(
+            _getPoolAddress(tokenA, tokenB),
+            to,
+            amountADesired,
+            amountBDesired,
+            true,
+            block.timestamp
+        );
+    }
+
+    function _processLiquidityRemove(address dexContract, bytes memory params) internal {
+        (
+            address tokenA,
+            address tokenB,
+            uint256 liquidity,
+            uint256 amountAMin,
+            uint256 amountBMin,
+            address to,
+        ) = abi.decode(params, (address, address, uint256, uint256, uint256, address, uint256));
+
+        emit LiquidityChanged(
+            _getPoolAddress(tokenA, tokenB),
+            to,
+            amountAMin,
+            amountBMin,
+            false,
+            block.timestamp
+        );
+    }
+
+    function _getPoolAddress(address tokenA, address tokenB) internal pure returns (address) {
+        // Simplified pool address calculation
+        return address(uint160(uint256(keccak256(abi.encodePacked(tokenA, tokenB)))));
+    }
+
+    function filter(address contractAddress) external view override returns (bool) {
+        return supportedDEXes[contractAddress];
+    }
+}
+```
+
+### Advanced API Implementation
+
+Complete API implementation with advanced querying and analytics.
+
+```typescript
+import { App, db, types } from "sim-idx";
+import { eq, sql, desc, asc, and, or, gte, lte, count } from "drizzle-orm";
+import { tradeExecuted, liquidityChanged } from "./db/schema/DEXTradeListener";
+
+const app = App.create();
+
+// Trade analytics endpoint
+app.get('/api/trades/analytics', async (c) => {
+  try {
+    const { timeframe = '24h', dex, token } = c.req.query();
+    
+    const timeAgo = getTimeAgo(timeframe);
+    const client = db.client(c);
+
+    // Build filters
+    const filters = [gte(tradeExecuted.timestamp, timeAgo)];
+    
+    if (dex) {
+      filters.push(eq(tradeExecuted.dexContract, dex));
+    }
+    
+    if (token) {
+      filters.push(
+        or(
+          eq(tradeExecuted.tokenIn, token),
+          eq(tradeExecuted.tokenOut, token)
+        )
+      );
+    }
+
+    // Get trade volume and count
+    const volumeData = await client
+      .select({
+        totalTrades: count(tradeExecuted.id),
+        totalVolumeIn: sql<number>`sum(${tradeExecuted.amountIn})`,
+        totalVolumeOut: sql<number>`sum(${tradeExecuted.amountOut})`,
+        avgAmountIn: sql<number>`avg(${tradeExecuted.amountIn})`,
+        avgAmountOut: sql<number>`avg(${tradeExecuted.amountOut})`
+      })
+      .from(tradeExecuted)
+      .where(and(...filters));
+
+    // Get top traders
+    const topTraders = await client
+      .select({
+        trader: tradeExecuted.trader,
+        tradeCount: count(tradeExecuted.id),
+        totalVolume: sql<number>`sum(${tradeExecuted.amountIn})`
+      })
+      .from(tradeExecuted)
+      .where(and(...filters))
+      .groupBy(tradeExecuted.trader)
+      .orderBy(desc(sql`sum(${tradeExecuted.amountIn})`))
+      .limit(10);
+
+    // Get recent large trades
+    const largeTrades = await client
+      .select()
+      .from(tradeExecuted)
+      .where(and(...filters))
+      .orderBy(desc(tradeExecuted.amountIn))
+      .limit(20);
+
+    // Hourly volume breakdown
+    const hourlyVolume = await client
+      .select({
+        hour: sql<string>`date_trunc('hour', to_timestamp(${tradeExecuted.timestamp}))`,
+        tradeCount: count(tradeExecuted.id),
+        volume: sql<number>`sum(${tradeExecuted.amountIn})`
+      })
+      .from(tradeExecuted)
+      .where(and(...filters))
+      .groupBy(sql`date_trunc('hour', to_timestamp(${tradeExecuted.timestamp}))`)
+      .orderBy(asc(sql`date_trunc('hour', to_timestamp(${tradeExecuted.timestamp}))`));
+
+    return c.json({
+      timeframe,
+      summary: volumeData[0],
+      topTraders,
+      largeTrades,
+      hourlyVolume,
+      generatedAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Analytics error:', error);
+    return c.json({ error: 'Failed to generate analytics' }, 500);
+  }
+});
+
+// Token performance endpoint
+app.get('/api/tokens/:address/performance', async (c) => {
+  try {
+    const tokenAddress = c.req.param('address');
+    const { period = '7d' } = c.req.query();
+    
+    const timeAgo = getTimeAgo(period);
+    const client = db.client(c);
+
+    // Get token trades as input and output
+    const tradesAsInput = await client
+      .select({
+        timestamp: tradeExecuted.timestamp,
+        amount: tradeExecuted.amountIn,
+        type: sql<string>`'sell'`
+      })
+      .from(tradeExecuted)
+      .where(
+        and(
+          eq(tradeExecuted.tokenIn, tokenAddress),
+          gte(tradeExecuted.timestamp, timeAgo)
+        )
+      );
+
+    const tradesAsOutput = await client
+      .select({
+        timestamp: tradeExecuted.timestamp,
+        amount: tradeExecuted.amountOut,
+        type: sql<string>`'buy'`
+      })
+      .from(tradeExecuted)
+      .where(
+        and(
+          eq(tradeExecuted.tokenOut, tokenAddress),
+          gte(tradeExecuted.timestamp, timeAgo)
+        )
+      );
+
+    const allTrades = [...tradesAsInput, ...tradesAsOutput]
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    // Calculate metrics
+    const totalVolume = allTrades.reduce((sum, trade) => sum + parseFloat(trade.amount), 0);
+    const buyVolume = tradesAsOutput.reduce((sum, trade) => sum + parseFloat(trade.amount), 0);
+    const sellVolume = tradesAsInput.reduce((sum, trade) => sum + parseFloat(trade.amount), 0);
+    
+    const buyPressure = totalVolume > 0 ? (buyVolume / totalVolume) * 100 : 0;
+    
+    return c.json({
+      tokenAddress,
+      period,
+      metrics: {
+        totalTrades: allTrades.length,
+        totalVolume,
+        buyVolume,
+        sellVolume,
+        buyPressure: Math.round(buyPressure * 100) / 100,
+        avgTradeSize: totalVolume / allTrades.length
+      },
+      trades: allTrades.slice(-100) // Recent 100 trades
+    });
+
+  } catch (error) {
+    console.error('Token performance error:', error);
+    return c.json({ error: 'Failed to get token performance' }, 500);
+  }
+});
+
+// Liquidity tracking endpoint
+app.get('/api/liquidity/pools', async (c) => {
+  try {
+    const { active_only = 'false' } = c.req.query();
+    const client = db.client(c);
+
+    const poolsQuery = client
+      .select({
+        pool: liquidityChanged.pool,
+        totalProviders: sql<number>`count(distinct ${liquidityChanged.provider})`,
+        totalAdds: sql<number>`sum(case when ${liquidityChanged.isAdd} then 1 else 0 end)`,
+        totalRemoves: sql<number>`sum(case when not ${liquidityChanged.isAdd} then 1 else 0 end)`,
+        netLiquidity0: sql<number>`sum(case when ${liquidityChanged.isAdd} then ${liquidityChanged.amount0} else -${liquidityChanged.amount0} end)`,
+        netLiquidity1: sql<number>`sum(case when ${liquidityChanged.isAdd} then ${liquidityChanged.amount1} else -${liquidityChanged.amount1} end)`,
+        lastActivity: sql<number>`max(${liquidityChanged.timestamp})`
+      })
+      .from(liquidityChanged)
+      .groupBy(liquidityChanged.pool);
+
+    if (active_only === 'true') {
+      const oneDayAgo = Math.floor(Date.now() / 1000) - 86400;
+      poolsQuery.having(gte(sql`max(${liquidityChanged.timestamp})`, oneDayAgo));
+    }
+
+    const pools = await poolsQuery
+      .orderBy(desc(sql`max(${liquidityChanged.timestamp})`))
+      .limit(50);
+
+    return c.json({
+      pools,
+      activeOnly: active_only === 'true',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Liquidity pools error:', error);
+    return c.json({ error: 'Failed to fetch liquidity data' }, 500);
+  }
+});
+
+// Helper function to convert timeframe to timestamp
+function getTimeAgo(timeframe: string): number {
+  const now = Math.floor(Date.now() / 1000);
+  
+  switch (timeframe) {
+    case '1h': return now - 3600;
+    case '24h': return now - 86400;
+    case '7d': return now - 604800;
+    case '30d': return now - 2592000;
+    default: return now - 86400;
+  }
+}
+
+// Error handling middleware
+app.onError((err, c) => {
+  console.error('API Error:', err);
+  
+  return c.json({
+    error: 'Internal server error',
+    message: err.message,
+    timestamp: new Date().toISOString()
+  }, 500);
+});
+
+// Health check endpoint
+app.get('/health', (c) => {
+  return c.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+export default app;
+```
+
+---
+
+## Testing Examples
+
+### Unit Testing for API Functions
+
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { MockedFunction, vi } from 'vitest';
+import { fetchBalances, retryWithBackoff } from '../src/api-client';
+
+// Mock fetch
+global.fetch = vi.fn();
+const mockedFetch = fetch as MockedFunction<typeof fetch>;
+
+describe('API Client', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe('fetchBalances', () => {
+    it('should fetch balances successfully', async () => {
+      const mockResponse = {
+        balances: [
+          {
+            address: 'native',
+            amount: '1000000000000000000',
+            chain: 'ethereum',
+            decimals: 18,
+            price_usd: 3000,
+            symbol: 'ETH',
+            value_usd: 3000
+          }
+        ],
+        wallet_address: '0x123...'
+      };
+
+      mockedFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      } as Response);
+
+      const result = await fetchBalances('0x123...');
+
+      expect(result).toEqual(mockResponse);
+      expect(mockedFetch).toHaveBeenCalledWith(
+        'https://api.sim.dune.com/v1/evm/balances/0x123...',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Sim-Api-Key': expect.any(String)
+          })
+        })
+      );
+    });
+
+    it('should handle API errors', async () => {
+      mockedFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized'
+      } as Response);
+
+      await expect(fetchBalances('0x123...')).rejects.toThrow('API error: 401 Unauthorized');
+    });
+
+    it('should handle rate limiting', async () => {
+      mockedFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests'
+      } as Response);
+
+      await expect(fetchBalances('0x123...')).rejects.toThrow('Rate limit exceeded');
+    });
+  });
+
+  describe('retryWithBackoff', () => {
+    it('should retry failed requests', async () => {
+      const mockFn = vi.fn()
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce('success');
+
+      const result = await retryWithBackoff(mockFn, { maxRetries: 3, baseDelay: 10 });
+
+      expect(result).toBe('success');
+      expect(mockFn).toHaveBeenCalledTimes(3);
+    });
+
+    it('should fail after max retries', async () => {
+      const mockFn = vi.fn().mockRejectedValue(new Error('Persistent error'));
+
+      await expect(
+        retryWithBackoff(mockFn, { maxRetries: 2, baseDelay: 10 })
+      ).rejects.toThrow('Persistent error');
+
+      expect(mockFn).toHaveBeenCalledTimes(3); // Initial + 2 retries
+    });
+  });
+});
+```
+
+### Integration Testing for IDX Listeners
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import { ethers } from 'ethers';
+import { DEXTradeListener } from '../contracts/DEXTradeListener.sol';
+
+describe('DEXTradeListener Integration', () => {
+  let listener: DEXTradeListener;
+  let mockProvider: ethers.Provider;
+
+  beforeEach(async () => {
+    // Setup test environment
+    mockProvider = new ethers.JsonRpcProvider('http://localhost:8545');
+    listener = await deployContract('DEXTradeListener');
+  });
+
+  it('should process Uniswap swap transactions', async () => {
+    const swapData = ethers.utils.defaultAbiCoder.encode(
+      ['uint256', 'uint256', 'address[]', 'address', 'uint256'],
+      [
+        ethers.utils.parseEther('1'), // amountIn
+        ethers.utils.parseEther('0.95'), // amountOutMin
+        ['0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e', '0xdAC17F958D2ee523a2206206994597C13D831ec7'], // path
+        '0x123...', // to
+        Math.floor(Date.now() / 1000) + 3600 // deadline
+      ]
+    );
+
+    const tx = await listener.process(
+      '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D', // Uniswap V2 Router
+      swapData
+    );
+
+    const receipt = await tx.wait();
+    
+    // Check that TradeExecuted event was emitted
+    const tradeEvent = receipt.events?.find(
+      event => event.event === 'TradeExecuted'
+    );
+
+    expect(tradeEvent).toBeDefined();
+    expect(tradeEvent?.args?.trader).toBe('0x123...');
+    expect(tradeEvent?.args?.amountIn).toBe(ethers.utils.parseEther('1'));
+  });
+
+  it('should filter non-supported contracts', async () => {
+    const result = await listener.filter('0x1234567890123456789012345678901234567890');
+    expect(result).toBe(false);
+
+    const supportedResult = await listener.filter('0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D');
+    expect(supportedResult).toBe(true);
+  });
+});
+```
+
+This comprehensive examples guide provides real-world implementations that developers can use as starting points for their own projects. Each example includes error handling, performance considerations, and best practices for production use.
+
+---
+
+## Performance and Optimization
+
+### Caching Strategy Example
+
+```typescript
+import Redis from 'ioredis';
+import { LRUCache } from 'lru-cache';
+
+class CacheManager {
+  private redis: Redis;
+  private memoryCache: LRUCache<string, any>;
+
+  constructor() {
+    this.redis = new Redis(process.env.REDIS_URL);
+    this.memoryCache = new LRUCache({
+      max: 1000,
+      ttl: 1000 * 60 * 5 // 5 minutes
+    });
+  }
+
+  async get(key: string): Promise<any> {
+    // Check memory cache first
+    const memoryResult = this.memoryCache.get(key);
+    if (memoryResult) return memoryResult;
+
+    // Check Redis cache
+    const redisResult = await this.redis.get(key);
+    if (redisResult) {
+      const parsed = JSON.parse(redisResult);
+      this.memoryCache.set(key, parsed);
+      return parsed;
+    }
+
+    return null;
+  }
+
+  async set(key: string, value: any, ttl: number = 300): Promise<void> {
+    this.memoryCache.set(key, value);
+    await this.redis.setex(key, ttl, JSON.stringify(value));
+  }
+}
+
+// Usage in API endpoint
+app.get('/api/balances/:address', async (c) => {
+  const cacheKey = `balances:${c.req.param('address')}`;
+  
+  let data = await cache.get(cacheKey);
+  if (!data) {
+    data = await fetchBalances(c.req.param('address'));
+    await cache.set(cacheKey, data, 300); // 5 minutes
+  }
+
+  return c.json(data);
+});
+```
+
+This usage examples documentation provides developers with practical, production-ready code they can adapt for their own applications while following best practices for performance, error handling, and user experience.

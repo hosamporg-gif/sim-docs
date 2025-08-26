@@ -1,0 +1,593 @@
+---
+title: "Master Documentation Index"
+sidebarTitle: "Master Index"
+description: "Complete searchable index of all Sim APIs, functions, components, and resources with cross-references"
+---
+
+This master index provides a comprehensive, searchable reference to all documentation, APIs, functions, and components in the Sim ecosystem. Use this page to quickly find specific information and discover related resources.
+
+## Quick Navigation
+
+<CardGroup cols={4}>
+  <Card icon="search" title="Search Guide" href="#search-guide">
+    How to use this index effectively
+  </Card>
+  <Card icon="api" title="API Reference" href="#api-reference-index">
+    All API endpoints and methods
+  </Card>
+  <Card icon="function" title="Functions" href="#function-index">
+    All available functions and utilities
+  </Card>
+  <Card icon="cube" title="Components" href="#component-index">
+    UI components and elements
+  </Card>
+</CardGroup>
+
+---
+
+## Search Guide
+
+### How to Use This Index
+
+1. **Ctrl+F Search**: Use browser search to find specific terms
+2. **Category Filtering**: Navigate to specific sections for focused browsing
+3. **Cross-References**: Follow links to related documentation
+4. **Tag Filtering**: Use tags to find related items
+
+### Search Tips
+
+- **API Endpoints**: Search for HTTP verbs (GET, POST) or endpoint paths
+- **Functions**: Search for function names or language (JavaScript, Python, Go)
+- **Components**: Search for component names or types (Card, Frame, etc.)
+- **Use Cases**: Search for actions (balance, transaction, NFT, etc.)
+
+---
+
+## API Reference Index
+
+### EVM APIs
+
+#### Balances API
+- **Endpoint**: `GET /v1/evm/balances/{address}`
+- **Purpose**: Get token balances for EVM addresses
+- **Documentation**: [Complete Guide](/api-reference#balances-api)
+- **Examples**: [Usage Examples](/usage-examples#building-a-portfolio-tracker)
+- **SDK Support**: [JavaScript](/sdk-documentation#balances) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmBalances()`, `getAllBalances()`, `formatTokenAmount()`
+- **Tags**: `#evm` `#balances` `#tokens` `#portfolio`
+
+#### Activity API
+- **Endpoint**: `GET /v1/evm/activity/{address}`
+- **Purpose**: Get real-time activity feed for addresses
+- **Documentation**: [Complete Guide](/api-reference#activity-api)
+- **Examples**: [Activity Feed Implementation](/usage-examples#activity-feed-implementation)
+- **SDK Support**: [JavaScript](/sdk-documentation#activity) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmActivity()`, `pollForNewActivity()`, `formatActivityType()`
+- **Tags**: `#evm` `#activity` `#transactions` `#realtime`
+
+#### Transactions API
+- **Endpoint**: `GET /v1/evm/transactions/{address}`
+- **Purpose**: Get detailed transaction information
+- **Documentation**: [Complete Guide](/api-reference#transactions-api)
+- **Examples**: [Transaction Processing](/usage-examples#transaction-processing)
+- **SDK Support**: [JavaScript](/sdk-documentation#transactions) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmTransactions()`, `processTransactions()`
+- **Tags**: `#evm` `#transactions` `#gas` `#details`
+
+#### Collectibles API
+- **Endpoint**: `GET /v1/evm/collectibles/{address}`
+- **Purpose**: Get NFT and collectible balances
+- **Documentation**: [Complete Guide](/api-reference#collectibles-api)
+- **Examples**: [NFT Gallery Implementation](/usage-examples#nft-gallery-implementation)
+- **SDK Support**: [JavaScript](/sdk-documentation#collectibles-nfts) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmCollectibles()`, `formatNFTMetadata()`
+- **Tags**: `#evm` `#nft` `#collectibles` `#metadata`
+
+#### Token Info API
+- **Endpoint**: `GET /v1/evm/token-info/{token_address}`
+- **Purpose**: Get detailed token information
+- **Documentation**: [Complete Guide](/api-reference#token-info-api)
+- **Examples**: [Token Information Lookup](/usage-examples#token-information-lookup)
+- **SDK Support**: [JavaScript](/sdk-documentation#token-information) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmTokenInfo()`, `batchTokenLookup()`
+- **Tags**: `#evm` `#tokens` `#metadata` `#info`
+
+#### Token Holders API
+- **Endpoint**: `GET /v1/evm/token-holders/{token_address}`
+- **Purpose**: Get holders of specific tokens
+- **Documentation**: [Complete Guide](/api-reference#token-holders-api)
+- **SDK Support**: [JavaScript](/sdk-documentation#token-information) | [Python](/sdk-documentation#evm-methods) | [Go](/sdk-documentation#evm-methods-1)
+- **Related Functions**: `getEvmTokenHolders()`
+- **Tags**: `#evm` `#tokens` `#holders` `#distribution`
+
+#### Supported Chains API
+- **Endpoint**: `GET /v1/evm/supported-chains`
+- **Purpose**: Get list of supported EVM chains
+- **Documentation**: [Supported Chains Guide](/evm/supported-chains)
+- **Related Functions**: `getSupportedChains()`, `getChainInfo()`
+- **Tags**: `#evm` `#chains` `#networks` `#support`
+
+### SVM APIs
+
+#### SVM Balances API
+- **Endpoint**: `GET /beta/svm/balances/{address}`
+- **Purpose**: Get token balances for Solana addresses
+- **Documentation**: [Complete Guide](/api-reference#svm-balances-api)
+- **Examples**: [Solana Wallet Integration](/usage-examples#solana-wallet-integration)
+- **SDK Support**: [JavaScript](/sdk-documentation#svm-methods) | [Python](/sdk-documentation#svm-methods) | [Go](/sdk-documentation#go-sdk)
+- **Related Functions**: `getSvmBalances()`, `formatSolAmount()`
+- **Tags**: `#svm` `#solana` `#balances` `#spl-tokens`
+
+#### SVM Transactions API
+- **Endpoint**: `GET /beta/svm/transactions/{address}`
+- **Purpose**: Get transaction history for Solana addresses
+- **Documentation**: [Complete Guide](/api-reference#svm-transactions-api)
+- **Examples**: [Solana Transaction Processing](/usage-examples#solana-transaction-processing)
+- **SDK Support**: [JavaScript](/sdk-documentation#svm-methods) | [Python](/sdk-documentation#svm-methods) | [Go](/sdk-documentation#go-sdk)
+- **Related Functions**: `getSvmTransactions()`
+- **Tags**: `#svm` `#solana` `#transactions` `#history`
+
+---
+
+## Function Index
+
+### JavaScript/TypeScript Functions
+
+#### API Client Functions
+- **`SimClient(config)`**: Initialize API client
+  - **File**: `@sim/api-client`
+  - **Documentation**: [SDK Documentation](/sdk-documentation#quick-start)
+  - **Parameters**: `config: SimClientConfig`
+  - **Returns**: `SimClient`
+  - **Tags**: `#javascript` `#client` `#initialization`
+
+- **`client.evm.balances(address, options?)`**: Get EVM balances
+  - **Documentation**: [Function Reference](/function-reference#getevmbalances)
+  - **Parameters**: `address: string`, `options?: BalanceOptions`
+  - **Returns**: `Promise<BalancesResponse>`
+  - **Tags**: `#javascript` `#evm` `#balances`
+
+- **`client.evm.activity(address, options?)`**: Get EVM activity
+  - **Documentation**: [Function Reference](/function-reference#getevmactivity)
+  - **Parameters**: `address: string`, `options?: ActivityOptions`
+  - **Returns**: `Promise<ActivityResponse>`
+  - **Tags**: `#javascript` `#evm` `#activity`
+
+- **`retryWithBackoff(fn, config?)`**: Retry with exponential backoff
+  - **Documentation**: [Function Reference](/function-reference#retryWithBackoff)
+  - **Parameters**: `fn: Function`, `config?: RetryConfig`
+  - **Returns**: `Promise<T>`
+  - **Tags**: `#javascript` `#utility` `#retry`
+
+#### Utility Functions
+- **`formatTokenAmount(amount, decimals)`**: Format token amounts
+  - **Documentation**: [Function Reference](/function-reference#formatTokenAmount)
+  - **Parameters**: `amount: string`, `decimals: number`
+  - **Returns**: `string`
+  - **Tags**: `#javascript` `#utility` `#formatting`
+
+- **`isValidEvmAddress(address)`**: Validate EVM addresses
+  - **Documentation**: [Function Reference](/function-reference#isValidEvmAddress)
+  - **Parameters**: `address: string`
+  - **Returns**: `boolean`
+  - **Tags**: `#javascript` `#utility` `#validation`
+
+- **`paginateAll(fetchFn, options?)`**: Auto-paginate API calls
+  - **Documentation**: [Function Reference](/function-reference#paginateAll)
+  - **Parameters**: `fetchFn: Function`, `options?: PaginationOptions`
+  - **Returns**: `Promise<T[]>`
+  - **Tags**: `#javascript` `#utility` `#pagination`
+
+### Python Functions
+
+#### API Client Functions
+- **`SimClient(config)`**: Initialize Python API client
+  - **File**: `sim-api-client`
+  - **Documentation**: [SDK Documentation](/sdk-documentation#python-sdk)
+  - **Parameters**: `config: ClientConfig`
+  - **Returns**: `SimClient`
+  - **Tags**: `#python` `#client` `#initialization`
+
+- **`client.evm.balances(address, **kwargs)`**: Get EVM balances
+  - **Documentation**: [SDK Documentation](/sdk-documentation#evm-methods)
+  - **Parameters**: `address: str`, `**kwargs`
+  - **Returns**: `BalancesResponse`
+  - **Tags**: `#python` `#evm` `#balances`
+
+#### Utility Functions
+- **`format_token_amount(amount, decimals, precision=4)`**: Format token amounts
+  - **Documentation**: [SDK Documentation](/sdk-documentation#data-processing-utilities)
+  - **Parameters**: `amount: str`, `decimals: int`, `precision: int`
+  - **Returns**: `str`
+  - **Tags**: `#python` `#utility` `#formatting`
+
+- **`calculate_portfolio_value(balances)`**: Calculate portfolio value
+  - **Documentation**: [SDK Documentation](/sdk-documentation#data-processing-utilities)
+  - **Parameters**: `balances: List[Balance]`
+  - **Returns**: `float`
+  - **Tags**: `#python` `#utility` `#calculation`
+
+### Go Functions
+
+#### API Client Functions
+- **`sim.NewClient(config)`**: Initialize Go API client
+  - **File**: `github.com/duneanalytics/sim-go-client`
+  - **Documentation**: [SDK Documentation](/sdk-documentation#go-sdk)
+  - **Parameters**: `config: *Config`
+  - **Returns**: `*Client`
+  - **Tags**: `#go` `#client` `#initialization`
+
+- **`client.EVM.Balances(ctx, address, opts)`**: Get EVM balances
+  - **Documentation**: [SDK Documentation](/sdk-documentation#evm-methods-2)
+  - **Parameters**: `ctx: context.Context`, `address: string`, `opts: *BalanceOptions`
+  - **Returns**: `(*BalancesResponse, error)`
+  - **Tags**: `#go` `#evm` `#balances`
+
+#### Utility Functions
+- **`GetAllBalances(ctx, client, address)`**: Get all balances with pagination
+  - **Documentation**: [SDK Documentation](/sdk-documentation#pagination-helper)
+  - **Parameters**: `ctx: context.Context`, `client: *sim.Client`, `address: string`
+  - **Returns**: `([]sim.Balance, error)`
+  - **Tags**: `#go` `#utility` `#pagination`
+
+### IDX Framework Functions
+
+#### CLI Functions
+- **`sim init`**: Initialize new IDX project
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#sim-init)
+  - **Usage**: `sim init [OPTIONS]`
+  - **Options**: `--template`, `--name`, `--description`
+  - **Tags**: `#cli` `#idx` `#initialization`
+
+- **`sim build`**: Compile Solidity contracts
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#sim-build)
+  - **Usage**: `sim build [OPTIONS]`
+  - **Options**: `--watch`, `--verbose`, `--clean`
+  - **Tags**: `#cli` `#idx` `#build`
+
+- **`sim listeners evaluate`**: Test listeners against blockchain data
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#sim-listeners-evaluate)
+  - **Usage**: `sim listeners evaluate --start-block BLOCK --chain-id ID`
+  - **Options**: `--end-block`, `--limit`, `--listener`, `--verbose`
+  - **Tags**: `#cli` `#idx` `#testing`
+
+#### Framework Functions
+- **`App.create(options?)`**: Create IDX application instance
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#basic-api-setup)
+  - **Parameters**: `options?: AppConfig`
+  - **Returns**: `HonoApp`
+  - **Tags**: `#idx` `#framework` `#api`
+
+- **`db.client(context)`**: Get database client
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#database-schema-integration)
+  - **Parameters**: `context: HonoContext`
+  - **Returns**: `DrizzleClient`
+  - **Tags**: `#idx` `#framework` `#database`
+
+#### Listener Functions
+- **`Listener.process(contractAddress, data)`**: Process blockchain events
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#basic-listener-template)
+  - **Parameters**: `contractAddress: address`, `data: bytes`
+  - **Language**: Solidity
+  - **Tags**: `#idx` `#listener` `#solidity`
+
+- **`Listener.filter(contractAddress)`**: Filter contracts to process
+  - **Documentation**: [IDX Framework Reference](/idx-framework-reference#basic-listener-template)
+  - **Parameters**: `contractAddress: address`
+  - **Returns**: `bool`
+  - **Language**: Solidity
+  - **Tags**: `#idx` `#listener` `#solidity`
+
+---
+
+## Component Index
+
+### Layout Components
+
+#### CardGroup
+- **Purpose**: Group multiple cards in responsive grid
+- **Documentation**: [Component Reference](/component-reference#cardgroup)
+- **Props**: `cols` (number)
+- **Usage**: Organizing navigation and feature highlights
+- **Examples**: [Master Index Layout](#quick-navigation)
+- **Tags**: `#layout` `#grid` `#responsive`
+
+#### Card
+- **Purpose**: Individual content or navigation card
+- **Documentation**: [Component Reference](/component-reference#card)
+- **Props**: `title`, `icon`, `href`, `horizontal`, `color`
+- **Usage**: Navigation, feature highlights, calls-to-action
+- **Examples**: [All documentation pages]
+- **Tags**: `#layout` `#navigation` `#content`
+
+#### Columns
+- **Purpose**: Responsive column layout
+- **Documentation**: [Component Reference](/component-reference#columns)
+- **Props**: `cols` (number)
+- **Usage**: Side-by-side content organization
+- **Tags**: `#layout` `#responsive` `#columns`
+
+#### Frame
+- **Purpose**: Styled container for media and content
+- **Documentation**: [Component Reference](/component-reference#frame)
+- **Props**: `caption`, `type`
+- **Usage**: Images, videos, highlighted content
+- **Examples**: [Feature showcases in guides]
+- **Tags**: `#layout` `#media` `#container`
+
+### Content Components
+
+#### Note
+- **Purpose**: Highlighted information boxes
+- **Documentation**: [Component Reference](/component-reference#note)
+- **Props**: `type` (info, warning, tip, caution)
+- **Usage**: Important information, warnings, tips
+- **Examples**: [Throughout all documentation]
+- **Tags**: `#content` `#information` `#highlight`
+
+#### Warning
+- **Purpose**: Warning messages with appropriate styling
+- **Documentation**: [Component Reference](/component-reference#warning)
+- **Usage**: Security warnings, potential issues
+- **Examples**: [API documentation warnings]
+- **Tags**: `#content` `#warning` `#alert`
+
+#### Tip
+- **Purpose**: Helpful tips and best practices
+- **Documentation**: [Component Reference](/component-reference#tip)
+- **Usage**: Performance tips, best practices
+- **Examples**: [SDK documentation tips]
+- **Tags**: `#content` `#tip` `#help`
+
+#### Steps
+- **Purpose**: Numbered step-by-step guides
+- **Documentation**: [Component Reference](/component-reference#steps)
+- **Usage**: Tutorials, setup instructions
+- **Examples**: [Quickstart guides]
+- **Tags**: `#content` `#tutorial` `#steps`
+
+### Interactive Components
+
+#### Accordion
+- **Purpose**: Collapsible content sections
+- **Documentation**: [Component Reference](/component-reference#accordion)
+- **Props**: `title`, `icon`, `defaultOpen`
+- **Usage**: FAQ sections, optional details
+- **Tags**: `#interactive` `#collapsible` `#organization`
+
+#### Tabs
+- **Purpose**: Tab interface for related content
+- **Documentation**: [Component Reference](/component-reference#tabs)
+- **Props**: `defaultTab`
+- **Usage**: Multi-language examples, related sections
+- **Examples**: [Code examples throughout documentation]
+- **Tags**: `#interactive` `#tabs` `#organization`
+
+### Code Components
+
+#### CodeGroup
+- **Purpose**: Multiple code blocks with language switching
+- **Documentation**: [Component Reference](/component-reference#codegroup)
+- **Usage**: Multi-language API examples
+- **Examples**: [All API documentation]
+- **Tags**: `#code` `#multilingual` `#examples`
+
+#### Code Block
+- **Purpose**: Syntax-highlighted code with language support
+- **Documentation**: [Component Reference](/component-reference#code-block)
+- **Languages**: JavaScript, TypeScript, Python, Bash, JSON, SQL, Solidity
+- **Usage**: Code examples, configuration files
+- **Examples**: [Throughout all documentation]
+- **Tags**: `#code` `#syntax` `#examples`
+
+### API Components
+
+#### OpenAPI
+- **Purpose**: Interactive API documentation from OpenAPI specs
+- **Documentation**: [Component Reference](/component-reference#openapi)
+- **Props**: `openapi`, `operations`
+- **Usage**: Automatic API reference generation
+- **Examples**: [Generated from OpenAPI specs in /evm/openapi/]
+- **Tags**: `#api` `#openapi` `#interactive`
+
+#### Endpoint
+- **Purpose**: Document single API endpoints
+- **Documentation**: [Component Reference](/component-reference#endpoint)
+- **Props**: `method`, `url`, `auth`
+- **Usage**: Custom API documentation
+- **Tags**: `#api` `#endpoint` `#documentation`
+
+---
+
+## Resource Index
+
+### Guides and Tutorials
+
+#### Getting Started
+- **Quickstart Guide**: [Developer Quickstart](/index)
+- **Authentication**: [API Authentication Guide](/index#authentication)
+- **First Request**: [Making Your First API Call](/index#your-first-request)
+- **Tags**: `#quickstart` `#authentication` `#tutorial`
+
+#### EVM Guides
+- **Build a Realtime Wallet**: [Complete Tutorial](/evm/build-a-realtime-wallet)
+- **Add Account Activity**: [Activity Integration](/evm/add-account-activity)
+- **Show NFTs**: [NFT Display Guide](/evm/show-nfts-collectibles)
+- **Realtime Chat Agent**: [AI Integration](/evm/build-a-realtime-chat-agent)
+- **Tags**: `#evm` `#tutorial` `#frontend` `#realtime`
+
+#### IDX Guides
+- **IDX Quickstart**: [Framework Introduction](/idx)
+- **CLI Overview**: [Command Reference](/idx/cli)
+- **App Structure**: [Project Organization](/idx/app-structure)
+- **Listener Development**: [Event Processing](/idx/listener)
+- **API Development**: [Building APIs](/idx/apis)
+- **Deployment**: [Production Deployment](/idx/deployment)
+- **Tags**: `#idx` `#framework` `#indexing` `#tutorial`
+
+### Reference Documentation
+
+#### API References
+- **Complete API Reference**: [All APIs and Endpoints](/api-reference)
+- **Function Reference**: [All Functions and Methods](/function-reference)
+- **Component Reference**: [UI Components Guide](/component-reference)
+- **SDK Documentation**: [Multi-language SDKs](/sdk-documentation)
+- **IDX Framework Reference**: [Complete Framework Guide](/idx-framework-reference)
+- **Tags**: `#reference` `#api` `#functions` `#components`
+
+#### Usage Examples
+- **Comprehensive Examples**: [Real-world Implementations](/usage-examples)
+- **Portfolio Tracker**: [Complete Frontend Example](/usage-examples#building-a-portfolio-tracker)
+- **Activity Feed**: [Real-time Updates](/usage-examples#activity-feed-implementation)
+- **NFT Gallery**: [NFT Display Implementation](/usage-examples#nft-gallery-implementation)
+- **Solana Integration**: [SVM API Usage](/usage-examples#solana-wallet-integration)
+- **IDX Examples**: [Blockchain Indexing](/usage-examples#idx-framework-examples)
+- **Tags**: `#examples` `#implementation` `#frontend` `#backend`
+
+### Error Handling and Troubleshooting
+
+#### Error Guides
+- **Error Handling**: [Comprehensive Error Guide](/error-handling)
+- **Rate Limiting**: [Rate Limit Management](/api-reference#rate-limits)
+- **Common Issues**: [Troubleshooting Guide](/support)
+- **Best Practices**: [Development Best Practices](/api-reference#best-practices)
+- **Tags**: `#errors` `#troubleshooting` `#best-practices`
+
+### Development Tools
+
+#### SDKs and Clients
+- **JavaScript/TypeScript SDK**: [Complete Guide](/sdk-documentation#javascript-typescript-sdk)
+- **Python SDK**: [Complete Guide](/sdk-documentation#python-sdk)
+- **Go SDK**: [Complete Guide](/sdk-documentation#go-sdk)
+- **CLI Tool**: [Command Line Interface](/sdk-documentation#cli-tool)
+- **REST API**: [Direct Integration](/sdk-documentation#rest-api-direct-integration)
+- **Tags**: `#sdk` `#tools` `#development`
+
+#### Testing and Validation
+- **Unit Testing**: [Testing Examples](/usage-examples#unit-testing-for-api-functions)
+- **Integration Testing**: [IDX Testing](/usage-examples#integration-testing-for-idx-listeners)
+- **Validation Utilities**: [Address and Data Validation](/function-reference#address-validation)
+- **Tags**: `#testing` `#validation` `#quality`
+
+---
+
+## Tags Index
+
+### By Category
+- **`#api`**: API-related content, endpoints, and references
+- **`#evm`**: Ethereum Virtual Machine and compatible chains
+- **`#svm`**: Solana Virtual Machine and Solana blockchain
+- **`#idx`**: IDX framework for blockchain indexing
+- **`#sdk`**: Software Development Kits and client libraries
+- **`#component`**: UI components and elements
+- **`#function`**: Functions, methods, and utilities
+- **`#tutorial`**: Step-by-step guides and tutorials
+- **`#reference`**: Reference documentation and specifications
+- **`#example`**: Code examples and implementations
+
+### By Language
+- **`#javascript`**: JavaScript and TypeScript content
+- **`#python`**: Python programming language
+- **`#go`**: Go programming language
+- **`#solidity`**: Solidity smart contract language
+- **`#bash`**: Shell scripts and CLI commands
+
+### By Use Case
+- **`#balances`**: Token balance queries and management
+- **`#transactions`**: Transaction data and processing
+- **`#nft`**: NFT and collectibles handling
+- **`#activity`**: Activity feeds and real-time updates
+- **`#portfolio`**: Portfolio tracking and management
+- **`#realtime`**: Real-time data and live updates
+- **`#analytics`**: Data analysis and metrics
+
+### By Skill Level
+- **`#quickstart`**: Beginner-friendly content
+- **`#intermediate`**: Intermediate developer content
+- **`#advanced`**: Advanced implementation patterns
+- **`#production`**: Production-ready implementations
+
+---
+
+## Cross-Reference Map
+
+### API to Function Mapping
+- **Balances API** → `getEvmBalances()` → [Portfolio Tracker Example](/usage-examples#building-a-portfolio-tracker)
+- **Activity API** → `getEvmActivity()` → [Activity Feed Example](/usage-examples#activity-feed-implementation)
+- **Collectibles API** → `getEvmCollectibles()` → [NFT Gallery Example](/usage-examples#nft-gallery-implementation)
+- **Token Info API** → `getEvmTokenInfo()` → [Token Information Lookup](/usage-examples#token-information-lookup)
+
+### Component to Usage Mapping
+- **CardGroup** → [Quick Navigation](#quick-navigation) → [Component Reference](/component-reference#cardgroup)
+- **CodeGroup** → [Multi-language Examples](/api-reference#authentication) → [Component Reference](/component-reference#codegroup)
+- **Steps** → [Setup Tutorials](/evm/build-a-realtime-wallet#project-setup) → [Component Reference](/component-reference#steps)
+- **Frame** → [Image Showcases](/evm/build-a-realtime-wallet) → [Component Reference](/component-reference#frame)
+
+### Framework to Implementation Mapping
+- **IDX Listeners** → [Listener Examples](/usage-examples#custom-contract-listener) → [IDX Reference](/idx-framework-reference#listener-development)
+- **IDX APIs** → [API Examples](/usage-examples#advanced-api-implementation) → [IDX Reference](/idx-framework-reference#api-framework)
+- **IDX CLI** → [CLI Commands](/idx-framework-reference#cli-reference) → [IDX Quickstart](/idx)
+
+---
+
+## Search Shortcuts
+
+### Common Searches
+- **"balance"** → EVM Balances API, getEvmBalances(), Portfolio examples
+- **"transaction"** → Activity API, Transactions API, getEvmActivity()
+- **"NFT"** → Collectibles API, getEvmCollectibles(), NFT Gallery
+- **"Solana"** → SVM APIs, Solana examples, getSvmBalances()
+- **"listener"** → IDX Framework, Listener development, Solidity examples
+- **"SDK"** → JavaScript/Python/Go SDKs, client libraries
+- **"example"** → Usage examples, code samples, implementations
+- **"error"** → Error handling, troubleshooting, best practices
+
+### Advanced Searches
+- **"real-time" OR "realtime"** → WebSocket examples, SSE, activity monitoring
+- **"pagination"** → Pagination utilities, getAllBalances(), pagination examples
+- **"authentication" OR "API key"** → Auth setup, security, client configuration
+- **"test" OR "testing"** → Unit tests, integration tests, validation
+
+---
+
+## Recent Updates
+
+### Latest Additions
+- **IDX Framework Reference**: Complete framework documentation
+- **SDK Documentation**: Multi-language SDK support
+- **Usage Examples**: Real-world implementation examples
+- **Component Reference**: UI component documentation
+- **Master Index**: This comprehensive searchable index
+
+### Documentation Metrics
+- **Total APIs**: 7 EVM APIs, 2 SVM APIs
+- **Total Functions**: 50+ documented functions across languages
+- **Total Components**: 25+ UI components and elements
+- **Total Examples**: 20+ complete implementation examples
+- **Languages Supported**: JavaScript, TypeScript, Python, Go, Solidity, PHP, Ruby
+- **Code Examples**: 100+ code snippets and implementations
+
+---
+
+## Feedback and Contributions
+
+We continuously improve our documentation based on community feedback and contributions.
+
+<CardGroup cols={2}>
+  <Card icon="github" title="Contribute to Docs" href="https://github.com/duneanalytics/sim-docs">
+    Help improve our documentation
+  </Card>
+  <Card icon="message-question" title="Request Documentation" href="/support">
+    Request new documentation or improvements
+  </Card>
+  <Card icon="bug" title="Report Issues" href="https://github.com/duneanalytics/sim-docs/issues">
+    Found an error? Report it here
+  </Card>
+  <Card icon="star" title="Rate Documentation" href="/support">
+    Share your feedback on our docs
+  </Card>
+</CardGroup>
+
+---
+
+*This master index is automatically updated as new documentation is added. Last updated: $(date)*

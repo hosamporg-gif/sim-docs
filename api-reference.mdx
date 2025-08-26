@@ -1,0 +1,770 @@
+---
+title: "Complete API Reference"
+sidebarTitle: "API Reference"
+description: "Comprehensive documentation for all Sim APIs, functions, and components with examples and usage instructions"
+---
+
+<Frame>
+  <img
+    src="/images/api-reference.webp"
+    alt="API Reference"
+    title="Complete API Reference"
+    className="mx-auto"
+    style={{ width:"100%" }}
+  />
+</Frame>
+
+This comprehensive reference provides detailed documentation for all public APIs, functions, and components in the Sim ecosystem. Each section includes examples, parameters, responses, and usage instructions.
+
+## Quick Navigation
+
+<CardGroup cols={3}>
+  <Card icon="ethereum" title="EVM APIs" href="#evm-apis">
+    Real-time blockchain data for Ethereum Virtual Machine compatible chains
+  </Card>
+  <Card icon="coins" title="SVM APIs" href="#svm-apis">
+    Solana Virtual Machine blockchain data and transaction information
+  </Card>
+  <Card icon="cogs" title="IDX Framework" href="#idx-framework">
+    Blockchain indexing framework for building custom data pipelines
+  </Card>
+</CardGroup>
+
+---
+
+## Authentication
+
+All API requests require authentication using API keys. Include your API key in the `X-Sim-Api-Key` header:
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.sim.dune.com/v1/evm/balances/ADDRESS" \
+     -H "X-Sim-Api-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const headers = {
+  'X-Sim-Api-Key': 'YOUR_API_KEY'
+};
+
+fetch('https://api.sim.dune.com/v1/evm/balances/ADDRESS', {
+  method: 'GET',
+  headers: headers
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+```python Python
+import requests
+
+headers = {
+    'X-Sim-Api-Key': 'YOUR_API_KEY'
+}
+
+response = requests.get(
+    'https://api.sim.dune.com/v1/evm/balances/ADDRESS',
+    headers=headers
+)
+data = response.json()
+```
+</CodeGroup>
+
+<Note>
+Get your API key from the [Sim Dashboard](https://sim.dune.com/). Keep your API keys secure and never expose them in client-side code.
+</Note>
+
+---
+
+## EVM APIs
+
+The EVM API suite provides real-time access to blockchain data across 60+ Ethereum Virtual Machine compatible chains.
+
+### Base URL
+```
+https://api.sim.dune.com/v1/evm
+```
+
+### Balances API
+
+Get real-time token balances for any EVM address across multiple chains.
+
+#### Endpoint
+```
+GET /v1/evm/balances/{address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Wallet address to get balances for |
+| `chain_ids` | string | No | Filter by chain(s). Accepts single ID, name, or comma-separated list |
+| `tokens` | string | No | Filter by specific token addresses |
+| `limit` | integer | No | Maximum results to return (default: 100, max: 1000) |
+| `offset` | string | No | Pagination cursor from previous response |
+
+#### Response Schema
+
+```typescript
+interface BalancesResponse {
+  balances: Balance[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Balance {
+  address: string;
+  amount: string;
+  chain: string;
+  decimals: number;
+  price_usd: number;
+  symbol: string;
+  value_usd: number;
+}
+```
+
+#### Example Request & Response
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.sim.dune.com/v1/evm/balances/0xd8da6bf26964af9d7eed9e03e53415d37aa96045?chain_ids=ethereum,polygon&limit=5" \
+     -H "X-Sim-Api-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.sim.dune.com/v1/evm/balances/0xd8da6bf26964af9d7eed9e03e53415d37aa96045?chain_ids=ethereum,polygon&limit=5',
+  {
+    headers: { 'X-Sim-Api-Key': 'YOUR_API_KEY' }
+  }
+);
+const data = await response.json();
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.sim.dune.com/v1/evm/balances/0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+    headers={'X-Sim-Api-Key': 'YOUR_API_KEY'},
+    params={'chain_ids': 'ethereum,polygon', 'limit': 5}
+)
+data = response.json()
+```
+</CodeGroup>
+
+```json Response
+{
+  "balances": [
+    {
+      "address": "native",
+      "amount": "605371497350928252303",
+      "chain": "ethereum",
+      "decimals": 18,
+      "price_usd": 3042.816964922323,
+      "symbol": "ETH",
+      "value_usd": 1842034.6622198338
+    },
+    {
+      "address": "0xa0b86a33e6ba4d8a6c81ca24c4f05d5c8f5b6f2e",
+      "amount": "1000000000000000000000",
+      "chain": "polygon",
+      "decimals": 18,
+      "price_usd": 0.85,
+      "symbol": "MATIC",
+      "value_usd": 850.0
+    }
+  ],
+  "next_offset": "dKMBWDLqM7vlyn5OMEXsLWp0nI4AAAABA5JLazNO7x4poVGqUwsgxgqvvIg",
+  "request_time": "2023-11-07T05:31:56Z",
+  "response_time": "2023-11-07T05:31:56Z",
+  "wallet_address": "0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+}
+```
+
+### Activity API
+
+Get real-time on-chain activity feed for any EVM address.
+
+#### Endpoint
+```
+GET /v1/evm/activity/{address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Wallet address to get activity for |
+| `chain_ids` | string | No | Filter by chain(s) |
+| `limit` | integer | No | Maximum results (default: 100, max: 1000) |
+| `offset` | string | No | Pagination cursor |
+| `start_time` | string | No | Filter activities after timestamp (ISO 8601) |
+| `end_time` | string | No | Filter activities before timestamp (ISO 8601) |
+
+#### Response Schema
+
+```typescript
+interface ActivityResponse {
+  activities: Activity[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Activity {
+  tx_hash: string;
+  block_number: number;
+  timestamp: string;
+  chain: string;
+  activity_type: 'transfer' | 'swap' | 'mint' | 'burn' | 'contract_interaction';
+  from_address: string;
+  to_address: string;
+  value?: string;
+  token?: TokenInfo;
+  gas_used: string;
+  gas_price: string;
+}
+```
+
+#### Example Usage
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.sim.dune.com/v1/evm/activity/0xd8da6bf26964af9d7eed9e03e53415d37aa96045?limit=10" \
+     -H "X-Sim-Api-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+// Get recent activity
+const getActivity = async (address, options = {}) => {
+  const params = new URLSearchParams(options);
+  const response = await fetch(
+    `https://api.sim.dune.com/v1/evm/activity/${address}?${params}`,
+    { headers: { 'X-Sim-Api-Key': 'YOUR_API_KEY' } }
+  );
+  return response.json();
+};
+
+const activity = await getActivity('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  limit: 10,
+  chain_ids: 'ethereum'
+});
+```
+
+```python Python
+def get_activity(address, **kwargs):
+    response = requests.get(
+        f'https://api.sim.dune.com/v1/evm/activity/{address}',
+        headers={'X-Sim-Api-Key': 'YOUR_API_KEY'},
+        params=kwargs
+    )
+    return response.json()
+
+# Get recent activity
+activity = get_activity(
+    '0xd8da6bf26964af9d7eed9e03e53415d37aa96045',
+    limit=10,
+    chain_ids='ethereum'
+)
+```
+</CodeGroup>
+
+### Transactions API
+
+Get detailed transaction information including gas data and block details.
+
+#### Endpoint
+```
+GET /v1/evm/transactions/{address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Wallet address |
+| `chain_ids` | string | No | Filter by chain(s) |
+| `limit` | integer | No | Maximum results (default: 100, max: 1000) |
+| `offset` | string | No | Pagination cursor |
+| `tx_type` | string | No | Filter by transaction type |
+
+#### Response Schema
+
+```typescript
+interface TransactionsResponse {
+  transactions: Transaction[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Transaction {
+  hash: string;
+  block_number: number;
+  timestamp: string;
+  chain: string;
+  from_address: string;
+  to_address: string;
+  value: string;
+  gas_limit: string;
+  gas_used: string;
+  gas_price: string;
+  transaction_type: number;
+  status: 'success' | 'failed';
+}
+```
+
+### Collectibles API
+
+Get NFT and collectible balances with metadata.
+
+#### Endpoint
+```
+GET /v1/evm/collectibles/{address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Wallet address |
+| `chain_ids` | string | No | Filter by chain(s) |
+| `limit` | integer | No | Maximum results (default: 100, max: 1000) |
+| `offset` | string | No | Pagination cursor |
+| `token_standard` | string | No | Filter by standard (ERC721, ERC1155) |
+
+#### Response Schema
+
+```typescript
+interface CollectiblesResponse {
+  collectibles: Collectible[];
+  next_offset?: string;
+  request_time: string;
+  response_time: string;
+  wallet_address: string;
+}
+
+interface Collectible {
+  contract_address: string;
+  token_id: string;
+  token_standard: 'ERC721' | 'ERC1155';
+  chain: string;
+  balance: string;
+  metadata?: {
+    name?: string;
+    description?: string;
+    image?: string;
+    attributes?: Attribute[];
+  };
+}
+```
+
+### Token Info API
+
+Get detailed information about specific tokens.
+
+#### Endpoint
+```
+GET /v1/evm/token-info/{token_address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `token_address` | string | Yes | Token contract address or 'native' |
+| `chain_ids` | string | Yes | Chain IDs to get info for |
+
+#### Response Schema
+
+```typescript
+interface TokenInfoResponse {
+  tokens: TokenInfo[];
+  request_time: string;
+  response_time: string;
+}
+
+interface TokenInfo {
+  address: string;
+  chain: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  total_supply?: string;
+  price_usd?: number;
+}
+```
+
+### Token Holders API
+
+Get holders of a specific token.
+
+#### Endpoint
+```
+GET /v1/evm/token-holders/{token_address}
+```
+
+---
+
+## SVM APIs
+
+Solana Virtual Machine APIs for accessing Solana blockchain data.
+
+### Base URL
+```
+https://api.sim.dune.com/beta/svm
+```
+
+### SVM Balances API
+
+Get token balances for Solana addresses.
+
+#### Endpoint
+```
+GET /beta/svm/balances/{address}
+```
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `address` | string | Yes | Solana wallet address |
+| `chains` | string | No | Comma-separated list of chains |
+| `limit` | integer | No | Maximum results (default: 100, max: 1000) |
+| `offset` | string | No | Pagination cursor |
+
+#### Example Usage
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.sim.dune.com/beta/svm/balances/86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY" \
+     -H "X-Sim-Api-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch(
+  'https://api.sim.dune.com/beta/svm/balances/86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY',
+  { headers: { 'X-Sim-Api-Key': 'YOUR_API_KEY' } }
+);
+const data = await response.json();
+```
+
+```python Python
+response = requests.get(
+    'https://api.sim.dune.com/beta/svm/balances/86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY',
+    headers={'X-Sim-Api-Key': 'YOUR_API_KEY'}
+)
+data = response.json()
+```
+</CodeGroup>
+
+### SVM Transactions API
+
+Get transaction history for Solana addresses.
+
+#### Endpoint
+```
+GET /beta/svm/transactions/{address}
+```
+
+---
+
+## IDX Framework
+
+The Sim IDX framework provides tools for building custom blockchain data indexers.
+
+### CLI Commands
+
+#### `sim init`
+Initialize a new IDX application with boilerplate code.
+
+**Usage:**
+```bash
+sim init [--template=TEMPLATE_NAME]
+```
+
+**Options:**
+- `--template`: Use a specific template (default: sample)
+
+**Available Templates:**
+- `sample`: Basic Uniswap V3 pool indexer
+- `contract-decoder`: Advanced contract interaction decoder
+
+#### `sim build`
+Compile Solidity contracts and prepare for deployment.
+
+```bash
+sim build
+```
+
+#### `sim test`
+Run tests for your listener contracts.
+
+```bash
+sim test
+```
+
+#### `sim authenticate`
+Set up API key authentication.
+
+```bash
+sim authenticate
+```
+
+#### `sim listeners evaluate`
+Test listener contracts against specific blocks.
+
+```bash
+sim listeners evaluate --start-block BLOCK_NUMBER --chain-id CHAIN_ID
+```
+
+**Options:**
+- `--start-block`: Block number to start evaluation
+- `--chain-id`: Chain ID to evaluate on
+- `--end-block`: Optional end block for range evaluation
+
+### Listener Development
+
+#### Basic Listener Structure
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "sim-idx/Listener.sol";
+
+contract MyListener is Listener {
+    // Define events to capture
+    event DataCaptured(
+        address indexed contract_address,
+        uint256 indexed block_number,
+        bytes32 data
+    );
+    
+    function process(
+        address contractAddress,
+        bytes calldata data
+    ) external override {
+        // Process blockchain event
+        emit DataCaptured(contractAddress, block.number, keccak256(data));
+    }
+}
+```
+
+#### Database Schema Generation
+
+Listeners automatically generate database schemas based on emitted events:
+
+```solidity
+event PoolCreated(
+    address indexed token0,
+    address indexed token1,
+    uint24 indexed fee,
+    int24 tickSpacing,
+    address pool
+);
+```
+
+Creates table:
+```sql
+CREATE TABLE pool_created (
+    id SERIAL PRIMARY KEY,
+    block_number BIGINT,
+    tx_hash VARCHAR(66),
+    token0 VARCHAR(42),
+    token1 VARCHAR(42),
+    fee INTEGER,
+    tick_spacing INTEGER,
+    pool VARCHAR(42),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### API Development
+
+#### Framework Setup
+
+```typescript
+import { App, db, types } from "sim-idx";
+import { eq, sql } from "drizzle-orm";
+
+const app = App.create();
+```
+
+#### Database Queries
+
+```typescript
+// Simple query
+app.get('/api/pools', async (c) => {
+  const pools = await db.client(c)
+    .select()
+    .from(poolCreated)
+    .limit(100);
+    
+  return c.json({ pools });
+});
+
+// Complex query with filtering
+app.get('/api/pools/:token', async (c) => {
+  const token = c.req.param('token');
+  
+  const pools = await db.client(c)
+    .select()
+    .from(poolCreated)
+    .where(
+      eq(poolCreated.token0, token)
+      .or(eq(poolCreated.token1, token))
+    )
+    .orderBy(desc(poolCreated.block_number));
+    
+  return c.json({ pools });
+});
+```
+
+#### Error Handling
+
+```typescript
+app.onError((err, c) => {
+  console.error(err);
+  return c.json({ 
+    error: 'Internal server error',
+    message: err.message 
+  }, 500);
+});
+```
+
+---
+
+## Error Handling
+
+### Common Error Codes
+
+| Code | Message | Description |
+|------|---------|-------------|
+| 400 | Bad Request | Invalid parameters or malformed request |
+| 401 | Unauthorized | Missing or invalid API key |
+| 403 | Forbidden | API key lacks required permissions |
+| 404 | Not Found | Endpoint or resource not found |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server-side error |
+
+### Error Response Format
+
+```json
+{
+  "error": "Error type",
+  "message": "Detailed error description",
+  "code": 400,
+  "details": {
+    "field": "Additional context"
+  }
+}
+```
+
+### Rate Limits
+
+| Endpoint Type | Requests per Minute |
+|---------------|-------------------|
+| Balances | 60 |
+| Activity | 30 |
+| Transactions | 30 |
+| Collectibles | 20 |
+| Token Info | 100 |
+
+---
+
+## SDKs and Integrations
+
+### JavaScript/TypeScript SDK
+
+```bash
+npm install @sim/api-client
+```
+
+```typescript
+import { SimClient } from '@sim/api-client';
+
+const client = new SimClient('YOUR_API_KEY');
+
+// Get balances
+const balances = await client.evm.balances('0x...', {
+  chainIds: ['ethereum', 'polygon'],
+  limit: 50
+});
+
+// Get activity
+const activity = await client.evm.activity('0x...', {
+  startTime: '2023-01-01T00:00:00Z'
+});
+```
+
+### Python SDK
+
+```bash
+pip install sim-api-client
+```
+
+```python
+from sim_api import SimClient
+
+client = SimClient('YOUR_API_KEY')
+
+# Get balances
+balances = client.evm.balances('0x...', 
+  chain_ids=['ethereum', 'polygon'],
+  limit=50
+)
+
+# Get activity
+activity = client.evm.activity('0x...',
+  start_time='2023-01-01T00:00:00Z'
+)
+```
+
+---
+
+## Best Practices
+
+### Performance Optimization
+
+1. **Use Pagination**: Always implement pagination for large datasets
+2. **Filter by Chain**: Specify chain_ids to reduce response times
+3. **Cache Responses**: Cache API responses when appropriate
+4. **Batch Requests**: Group multiple requests when possible
+
+### Error Handling
+
+1. **Implement Retries**: Handle temporary failures with exponential backoff
+2. **Validate Addresses**: Validate wallet addresses before making requests
+3. **Monitor Rate Limits**: Track your usage to avoid rate limiting
+
+### Security
+
+1. **Secure API Keys**: Never expose API keys in client-side code
+2. **Use HTTPS**: Always make requests over HTTPS
+3. **Validate Input**: Sanitize and validate all user inputs
+
+---
+
+## Support and Resources
+
+<CardGroup cols={2}>
+  <Card icon="message-question" title="Get Support" href="/support">
+    Need help? Contact our support team
+  </Card>
+  <Card icon="book-open" title="Guides & Tutorials" href="/evm/build-a-realtime-wallet">
+    Step-by-step implementation guides
+  </Card>
+  <Card icon="robot" title="Build with AI" href="/build-with-ai">
+    AI-powered development resources
+  </Card>
+  <Card icon="github" title="Community" href="https://github.com/duneanalytics">
+    Join our developer community
+  </Card>
+</CardGroup>
