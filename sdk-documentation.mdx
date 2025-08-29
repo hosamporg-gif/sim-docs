@@ -1,0 +1,1257 @@
+---
+title: "SDK Documentation"
+sidebarTitle: "SDKs"
+description: "Official and community SDKs for Sim APIs with comprehensive guides for JavaScript, Python, Go, and more"
+---
+
+The Sim APIs are designed to be easily integrated into any application. This documentation covers official SDKs, community libraries, and direct API integration patterns for multiple programming languages.
+
+## Available SDKs
+
+<CardGroup cols={2}>
+  <Card icon="js" title="JavaScript/TypeScript" href="#javascript-typescript-sdk">
+    Official SDK for Node.js and browser environments
+  </Card>
+  <Card icon="python" title="Python" href="#python-sdk">
+    Official Python SDK with async support
+  </Card>
+  <Card icon="code" title="Go" href="#go-sdk">
+    Community-maintained Go client library
+  </Card>
+  <Card icon="terminal" title="CLI Tool" href="#cli-tool">
+    Command-line interface for quick API access
+  </Card>
+</CardGroup>
+
+---
+
+## JavaScript/TypeScript SDK
+
+### Installation
+
+<CodeGroup>
+```bash npm
+npm install @sim/api-client
+```
+
+```bash yarn
+yarn add @sim/api-client
+```
+
+```bash pnpm
+pnpm add @sim/api-client
+```
+</CodeGroup>
+
+### Quick Start
+
+```typescript
+import { SimClient } from '@sim/api-client';
+
+// Initialize client
+const client = new SimClient({
+  apiKey: 'your-api-key',
+  baseUrl: 'https://api.sim.dune.com', // optional, defaults to production
+  timeout: 30000, // optional, request timeout in ms
+  retries: 3 // optional, number of retries for failed requests
+});
+
+// Get EVM balances
+const balances = await client.evm.balances('0xd8da6bf26964af9d7eed9e03e53415d37aa96045');
+console.log(`Total balance: ${balances.balances.length} tokens`);
+
+// Get activity feed
+const activity = await client.evm.activity('0xd8da6bf26964af9d7eed9e03e53415d37aa96045', {
+  limit: 50
+});
+console.log(`Found ${activity.activities.length} activities`);
+```
+
+### Configuration Options
+
+```typescript
+interface SimClientConfig {
+  apiKey: string;
+  baseUrl?: string;
+  timeout?: number;
+  retries?: number;
+  retryDelay?: number;
+  userAgent?: string;
+  enableCache?: boolean;
+  cacheOptions?: {
+    ttl: number;
+    maxSize: number;
+  };
+}
+
+const client = new SimClient({
+  apiKey: process.env.SIM_API_KEY!,
+  timeout: 60000,
+  retries: 5,
+  retryDelay: 1000,
+  enableCache: true,
+  cacheOptions: {
+    ttl: 300000, // 5 minutes
+    maxSize: 1000 // max cached responses
+  }
+});
+```
+
+### EVM Methods
+
+#### Balances
+
+```typescript
+// Basic usage
+const balances = await client.evm.balances('0x...');
+
+// With options
+const balances = await client.evm.balances('0x...', {
+  chainIds: ['ethereum', 'polygon', 'arbitrum'],
+  tokens: ['0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e'], // filter by specific tokens
+  limit: 100,
+  offset: 'cursor-string'
+});
+
+// Paginate through all balances
+const allBalances = [];
+let nextOffset = null;
+
+do {
+  const response = await client.evm.balances('0x...', {
+    offset: nextOffset,
+    limit: 100
+  });
+  
+  allBalances.push(...response.balances);
+  nextOffset = response.next_offset;
+} while (nextOffset);
+
+console.log(`Total balances: ${allBalances.length}`);
+```
+
+#### Activity
+
+```typescript
+// Recent activity
+const activity = await client.evm.activity('0x...', {
+  limit: 20
+});
+
+// Filtered activity
+const activity = await client.evm.activity('0x...', {
+  chainIds: ['ethereum'],
+  startTime: '2023-01-01T00:00:00Z',
+  endTime: '2023-12-31T23:59:59Z',
+  limit: 100
+});
+
+// Real-time activity monitoring
+class ActivityMonitor {
+  private client: SimClient;
+  private lastTimestamp: string | null = null;
+
+  constructor(client: SimClient) {
+    this.client = client;
+  }
+
+  async pollForNewActivity(address: string, callback: (activities: Activity[]) => void) {
+    const activity = await this.client.evm.activity(address, {
+      startTime: this.lastTimestamp || new Date(Date.now() - 3600000).toISOString(),
+      limit: 100
+    });
+
+    if (activity.activities.length > 0) {
+      const newActivities = this.lastTimestamp 
+        ? activity.activities.filter(a => a.timestamp > this.lastTimestamp!)
+        : activity.activities;
+
+      if (newActivities.length > 0) {
+        callback(newActivities);
+        this.lastTimestamp = newActivities[0].timestamp;
+      }
+    }
+  }
+
+  startPolling(address: string, intervalMs: number = 30000) {
+    return setInterval(() => {
+      this.pollForNewActivity(address, (activities) => {
+        console.log(`Found ${activities.length} new activities`);
+      });
+    }, intervalMs);
+  }
+}
+
+const monitor = new ActivityMonitor(client);
+const pollId = monitor.startPolling('0x...', 15000); // Poll every 15 seconds
+```
+
+#### Transactions
+
+```typescript
+// Get transactions
+const transactions = await client.evm.transactions('0x...', {
+  chainIds: ['ethereum', 'polygon'],
+  limit: 50
+});
+
+// Filter by transaction type
+const swapTransactions = await client.evm.transactions('0x...', {
+  txType: 'swap',
+  limit: 100
+});
+```
+
+#### Collectibles (NFTs)
+
+```typescript
+// Get all NFTs
+const nfts = await client.evm.collectibles('0x...');
+
+// Filter by standard and chain
+const erc721s = await client.evm.collectibles('0x...', {
+  tokenStandard: 'ERC721',
+  chainIds: ['ethereum', 'polygon']
+});
+
+// Get NFT metadata
+const nftWithMetadata = nfts.collectibles.map(nft => ({
+  ...nft,
+  displayName: nft.metadata?.name || `Token #${nft.token_id}`,
+  imageUrl: nft.metadata?.image || '/placeholder-nft.png'
+}));
+```
+
+#### Token Information
+
+```typescript
+// Get token info for specific chains
+const tokenInfo = await client.evm.tokenInfo('0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e', {
+  chainIds: 'ethereum,polygon,arbitrum'
+});
+
+// Get native token info
+const ethInfo = await client.evm.tokenInfo('native', {
+  chainIds: 'ethereum'
+});
+
+// Batch token lookup
+const tokens = [
+  '0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e', // USDC
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  'native' // ETH
+];
+
+const tokenInfoPromises = tokens.map(token => 
+  client.evm.tokenInfo(token, { chainIds: 'ethereum' })
+);
+
+const allTokenInfo = await Promise.all(tokenInfoPromises);
+```
+
+### SVM Methods
+
+```typescript
+// Solana balances
+const solBalances = await client.svm.balances('86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY');
+
+// Solana transactions
+const solTransactions = await client.svm.transactions('86xCnPeV69n6t3DnyGvkKobf9FdN2H9oiVDdaMpo2MMY', {
+  limit: 50
+});
+```
+
+### Error Handling
+
+```typescript
+import { SimApiError, RateLimitError, AuthenticationError } from '@sim/api-client';
+
+try {
+  const balances = await client.evm.balances('0x...');
+} catch (error) {
+  if (error instanceof RateLimitError) {
+    console.log(`Rate limited. Retry after: ${error.retryAfter}ms`);
+    // Wait and retry
+    await new Promise(resolve => setTimeout(resolve, error.retryAfter));
+    const balances = await client.evm.balances('0x...');
+  } else if (error instanceof AuthenticationError) {
+    console.error('Invalid API key');
+  } else if (error instanceof SimApiError) {
+    console.error(`API Error: ${error.message} (${error.statusCode})`);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+### TypeScript Types
+
+```typescript
+// Export all types for use in your application
+export {
+  Balance,
+  Activity,
+  Transaction,
+  Collectible,
+  TokenInfo,
+  SvmBalance,
+  SvmTransaction,
+  // Response types
+  BalancesResponse,
+  ActivityResponse,
+  TransactionsResponse,
+  CollectiblesResponse,
+  TokenInfoResponse,
+  // Error types
+  SimApiError,
+  RateLimitError,
+  AuthenticationError
+} from '@sim/api-client';
+
+// Example usage with proper typing
+const processBalances = (balances: Balance[]): number => {
+  return balances.reduce((total, balance) => total + balance.value_usd, 0);
+};
+```
+
+---
+
+## Python SDK
+
+### Installation
+
+```bash
+pip install sim-api-client
+```
+
+### Quick Start
+
+```python
+from sim_api import SimClient
+import asyncio
+
+# Initialize client
+client = SimClient(
+    api_key='your-api-key',
+    timeout=30,
+    max_retries=3
+)
+
+# Synchronous usage
+balances = client.evm.balances('0xd8da6bf26964af9d7eed9e03e53415d37aa96045')
+print(f"Found {len(balances.balances)} token balances")
+
+# Asynchronous usage
+async def get_wallet_data():
+    async with SimClient(api_key='your-api-key') as client:
+        balances = await client.evm.balances('0x...')
+        activity = await client.evm.activity('0x...', limit=50)
+        
+        return {
+            'balances': balances.balances,
+            'activities': activity.activities
+        }
+
+# Run async function
+wallet_data = asyncio.run(get_wallet_data())
+```
+
+### Configuration
+
+```python
+from sim_api import SimClient
+from sim_api.types import ClientConfig
+
+config = ClientConfig(
+    api_key='your-api-key',
+    base_url='https://api.sim.dune.com',
+    timeout=60,
+    max_retries=5,
+    retry_delay=1.0,
+    enable_cache=True,
+    cache_ttl=300  # 5 minutes
+)
+
+client = SimClient(config)
+```
+
+### EVM Methods
+
+```python
+# Get balances with filtering
+balances = client.evm.balances(
+    address='0x...',
+    chain_ids=['ethereum', 'polygon'],
+    tokens=['0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e'],
+    limit=100
+)
+
+# Paginate through all balances
+def get_all_balances(address: str) -> list:
+    all_balances = []
+    offset = None
+    
+    while True:
+        response = client.evm.balances(
+            address=address,
+            offset=offset,
+            limit=100
+        )
+        
+        all_balances.extend(response.balances)
+        
+        if not response.next_offset:
+            break
+            
+        offset = response.next_offset
+    
+    return all_balances
+
+# Get activity with date filtering
+from datetime import datetime, timedelta
+
+# Last 24 hours
+start_time = datetime.now() - timedelta(days=1)
+activity = client.evm.activity(
+    address='0x...',
+    start_time=start_time.isoformat(),
+    limit=100
+)
+
+# Get NFTs by standard
+nfts = client.evm.collectibles(
+    address='0x...',
+    token_standard='ERC721',
+    chain_ids=['ethereum']
+)
+
+# Token information
+token_info = client.evm.token_info(
+    token_address='0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e',
+    chain_ids='ethereum,polygon'
+)
+```
+
+### Data Processing Utilities
+
+```python
+from sim_api.utils import format_token_amount, calculate_portfolio_value
+from decimal import Decimal
+
+# Format token amounts for display
+def format_balance(balance):
+    formatted_amount = format_token_amount(
+        amount=balance.amount,
+        decimals=balance.decimals,
+        precision=4
+    )
+    return f"{formatted_amount} {balance.symbol}"
+
+# Calculate total portfolio value
+balances = client.evm.balances('0x...')
+total_value = calculate_portfolio_value(balances.balances)
+print(f"Total portfolio value: ${total_value:,.2f}")
+
+# Filter significant balances
+significant_balances = [
+    balance for balance in balances.balances
+    if balance.value_usd >= 1.0  # $1 minimum
+]
+
+# Group by chain
+from collections import defaultdict
+
+balances_by_chain = defaultdict(list)
+for balance in balances.balances:
+    balances_by_chain[balance.chain].append(balance)
+
+for chain, chain_balances in balances_by_chain.items():
+    chain_value = sum(b.value_usd for b in chain_balances)
+    print(f"{chain.title()}: ${chain_value:,.2f}")
+```
+
+### Async Batch Processing
+
+```python
+import asyncio
+from typing import List
+
+class WalletAnalyzer:
+    def __init__(self, client: SimClient):
+        self.client = client
+    
+    async def analyze_wallet(self, address: str) -> dict:
+        """Comprehensive wallet analysis"""
+        tasks = [
+            self.client.evm.balances(address),
+            self.client.evm.activity(address, limit=100),
+            self.client.evm.collectibles(address)
+        ]
+        
+        balances, activity, nfts = await asyncio.gather(*tasks)
+        
+        return {
+            'address': address,
+            'total_value': sum(b.value_usd for b in balances.balances),
+            'token_count': len(balances.balances),
+            'activity_count': len(activity.activities),
+            'nft_count': len(nfts.collectibles),
+            'chains': list(set(b.chain for b in balances.balances))
+        }
+    
+    async def analyze_multiple_wallets(self, addresses: List[str]) -> List[dict]:
+        """Analyze multiple wallets concurrently"""
+        tasks = [self.analyze_wallet(addr) for addr in addresses]
+        return await asyncio.gather(*tasks)
+
+# Usage
+analyzer = WalletAnalyzer(client)
+addresses = ['0x...', '0x...', '0x...']
+results = asyncio.run(analyzer.analyze_multiple_wallets(addresses))
+
+for result in results:
+    print(f"Wallet {result['address']}: ${result['total_value']:.2f}")
+```
+
+### Error Handling
+
+```python
+from sim_api.exceptions import (
+    SimApiError,
+    RateLimitError,
+    AuthenticationError,
+    ValidationError
+)
+import time
+
+def safe_api_call(func, *args, **kwargs):
+    """Wrapper for safe API calls with retry logic"""
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            return func(*args, **kwargs)
+            
+        except RateLimitError as e:
+            if attempt == max_retries - 1:
+                raise
+            
+            print(f"Rate limited, waiting {e.retry_after}s...")
+            time.sleep(e.retry_after / 1000)  # Convert ms to seconds
+            
+        except AuthenticationError:
+            print("Authentication failed - check your API key")
+            raise
+            
+        except ValidationError as e:
+            print(f"Validation error: {e.message}")
+            raise
+            
+        except SimApiError as e:
+            print(f"API error: {e.message} (status: {e.status_code})")
+            if attempt == max_retries - 1:
+                raise
+            
+            time.sleep(2 ** attempt)  # Exponential backoff
+
+# Usage
+balances = safe_api_call(
+    client.evm.balances,
+    '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
+)
+```
+
+---
+
+## Go SDK
+
+### Installation
+
+```bash
+go get github.com/duneanalytics/sim-go-client
+```
+
+### Quick Start
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    
+    "github.com/duneanalytics/sim-go-client"
+)
+
+func main() {
+    // Initialize client
+    client := sim.NewClient(&sim.Config{
+        APIKey:     "your-api-key",
+        BaseURL:    "https://api.sim.dune.com",
+        Timeout:    30 * time.Second,
+        MaxRetries: 3,
+    })
+    
+    ctx := context.Background()
+    
+    // Get EVM balances
+    balances, err := client.EVM.Balances(ctx, "0xd8da6bf26964af9d7eed9e03e53415d37aa96045", nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    
+    fmt.Printf("Found %d token balances\n", len(balances.Balances))
+    
+    // Calculate total value
+    var totalValue float64
+    for _, balance := range balances.Balances {
+        totalValue += balance.ValueUSD
+    }
+    
+    fmt.Printf("Total portfolio value: $%.2f\n", totalValue)
+}
+```
+
+### Configuration Options
+
+```go
+type Config struct {
+    APIKey       string
+    BaseURL      string
+    Timeout      time.Duration
+    MaxRetries   int
+    RetryDelay   time.Duration
+    UserAgent    string
+    EnableCache  bool
+    CacheOptions *CacheConfig
+}
+
+type CacheConfig struct {
+    TTL     time.Duration
+    MaxSize int
+}
+
+// Custom configuration
+config := &sim.Config{
+    APIKey:      os.Getenv("SIM_API_KEY"),
+    Timeout:     60 * time.Second,
+    MaxRetries:  5,
+    RetryDelay:  time.Second,
+    EnableCache: true,
+    CacheOptions: &sim.CacheConfig{
+        TTL:     5 * time.Minute,
+        MaxSize: 1000,
+    },
+}
+
+client := sim.NewClient(config)
+```
+
+### EVM Methods
+
+```go
+// Balances with options
+balanceOpts := &sim.BalanceOptions{
+    ChainIDs: []string{"ethereum", "polygon"},
+    Tokens:   []string{"0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e"},
+    Limit:    100,
+}
+
+balances, err := client.EVM.Balances(ctx, address, balanceOpts)
+if err != nil {
+    return err
+}
+
+// Activity with filtering
+activityOpts := &sim.ActivityOptions{
+    ChainIDs:  []string{"ethereum"},
+    StartTime: time.Now().Add(-24 * time.Hour),
+    Limit:     50,
+}
+
+activity, err := client.EVM.Activity(ctx, address, activityOpts)
+if err != nil {
+    return err
+}
+
+// Collectibles
+nftOpts := &sim.CollectibleOptions{
+    TokenStandard: "ERC721",
+    ChainIDs:      []string{"ethereum"},
+}
+
+nfts, err := client.EVM.Collectibles(ctx, address, nftOpts)
+if err != nil {
+    return err
+}
+```
+
+### Pagination Helper
+
+```go
+func GetAllBalances(ctx context.Context, client *sim.Client, address string) ([]sim.Balance, error) {
+    var allBalances []sim.Balance
+    var offset *string
+    
+    for {
+        opts := &sim.BalanceOptions{
+            Limit:  100,
+            Offset: offset,
+        }
+        
+        response, err := client.EVM.Balances(ctx, address, opts)
+        if err != nil {
+            return nil, err
+        }
+        
+        allBalances = append(allBalances, response.Balances...)
+        
+        if response.NextOffset == nil {
+            break
+        }
+        
+        offset = response.NextOffset
+    }
+    
+    return allBalances, nil
+}
+```
+
+### Concurrent Processing
+
+```go
+func AnalyzeMultipleWallets(ctx context.Context, client *sim.Client, addresses []string) ([]WalletAnalysis, error) {
+    type result struct {
+        analysis WalletAnalysis
+        err      error
+    }
+    
+    resultChan := make(chan result, len(addresses))
+    
+    // Start goroutines for each wallet
+    for _, addr := range addresses {
+        go func(address string) {
+            analysis, err := AnalyzeWallet(ctx, client, address)
+            resultChan <- result{analysis: analysis, err: err}
+        }(addr)
+    }
+    
+    // Collect results
+    var analyses []WalletAnalysis
+    var errors []error
+    
+    for i := 0; i < len(addresses); i++ {
+        res := <-resultChan
+        if res.err != nil {
+            errors = append(errors, res.err)
+        } else {
+            analyses = append(analyses, res.analysis)
+        }
+    }
+    
+    if len(errors) > 0 {
+        return analyses, fmt.Errorf("encountered %d errors", len(errors))
+    }
+    
+    return analyses, nil
+}
+
+type WalletAnalysis struct {
+    Address     string  `json:"address"`
+    TotalValue  float64 `json:"total_value"`
+    TokenCount  int     `json:"token_count"`
+    ChainCount  int     `json:"chain_count"`
+}
+
+func AnalyzeWallet(ctx context.Context, client *sim.Client, address string) (WalletAnalysis, error) {
+    balances, err := client.EVM.Balances(ctx, address, nil)
+    if err != nil {
+        return WalletAnalysis{}, err
+    }
+    
+    var totalValue float64
+    chains := make(map[string]bool)
+    
+    for _, balance := range balances.Balances {
+        totalValue += balance.ValueUSD
+        chains[balance.Chain] = true
+    }
+    
+    return WalletAnalysis{
+        Address:    address,
+        TotalValue: totalValue,
+        TokenCount: len(balances.Balances),
+        ChainCount: len(chains),
+    }, nil
+}
+```
+
+### Error Handling
+
+```go
+import "github.com/duneanalytics/sim-go-client/errors"
+
+func handleAPICall() error {
+    balances, err := client.EVM.Balances(ctx, address, nil)
+    if err != nil {
+        switch e := err.(type) {
+        case *errors.RateLimitError:
+            fmt.Printf("Rate limited, retry after %d ms\n", e.RetryAfter)
+            time.Sleep(time.Duration(e.RetryAfter) * time.Millisecond)
+            // Retry the call
+            return handleAPICall()
+            
+        case *errors.AuthError:
+            return fmt.Errorf("authentication failed: %w", err)
+            
+        case *errors.ValidationError:
+            return fmt.Errorf("validation error: %w", err)
+            
+        case *errors.APIError:
+            return fmt.Errorf("API error %d: %s", e.StatusCode, e.Message)
+            
+        default:
+            return fmt.Errorf("unexpected error: %w", err)
+        }
+    }
+    
+    // Process balances...
+    return nil
+}
+```
+
+---
+
+## CLI Tool
+
+### Installation
+
+```bash
+# Install globally
+npm install -g @sim/cli
+
+# Or use npx for one-time usage
+npx @sim/cli --help
+```
+
+### Authentication
+
+```bash
+# Set your API key
+sim auth set-key YOUR_API_KEY
+
+# Verify authentication
+sim auth verify
+```
+
+### Commands
+
+#### Balances
+
+```bash
+# Get balances for an address
+sim balances 0xd8da6bf26964af9d7eed9e03e53415d37aa96045
+
+# Filter by chains
+sim balances 0x... --chains ethereum,polygon
+
+# Output as JSON
+sim balances 0x... --format json
+
+# Save to file
+sim balances 0x... --output balances.json
+
+# Show only significant balances
+sim balances 0x... --min-value 1.00
+```
+
+#### Activity
+
+```bash
+# Get recent activity
+sim activity 0x... --limit 20
+
+# Filter by time range
+sim activity 0x... --since "2023-01-01" --until "2023-12-31"
+
+# Filter by chain
+sim activity 0x... --chains ethereum
+
+# Watch for new activity (real-time)
+sim activity 0x... --watch --interval 30s
+```
+
+#### NFTs
+
+```bash
+# Get all NFTs
+sim nfts 0x...
+
+# Filter by standard
+sim nfts 0x... --standard ERC721
+
+# Show metadata
+sim nfts 0x... --include-metadata
+```
+
+#### Token Information
+
+```bash
+# Get token info
+sim token-info 0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e --chains ethereum
+
+# Get native token info
+sim token-info native --chains ethereum
+```
+
+#### Batch Operations
+
+```bash
+# Analyze multiple addresses
+sim batch analyze addresses.txt --output results.json
+
+# addresses.txt format:
+# 0xd8da6bf26964af9d7eed9e03e53415d37aa96045
+# 0x123...
+# 0x456...
+```
+
+### Configuration
+
+```bash
+# View current configuration
+sim config show
+
+# Set default chains
+sim config set default-chains ethereum,polygon,arbitrum
+
+# Set output format
+sim config set format json
+
+# Set cache settings
+sim config set cache-ttl 300
+```
+
+### Scripting Examples
+
+```bash
+#!/bin/bash
+
+# Portfolio monitoring script
+ADDRESS="0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+
+# Get current portfolio value
+CURRENT_VALUE=$(sim balances $ADDRESS --format json | jq '.total_value_usd')
+
+# Log to file with timestamp
+echo "$(date): Portfolio value: $CURRENT_VALUE" >> portfolio.log
+
+# Send alert if value drops below threshold
+THRESHOLD=10000
+if (( $(echo "$CURRENT_VALUE < $THRESHOLD" | bc -l) )); then
+    echo "Alert: Portfolio value below threshold!" | mail -s "Portfolio Alert" user@example.com
+fi
+```
+
+---
+
+## REST API Direct Integration
+
+For languages without official SDKs, you can integrate directly with the REST API.
+
+### cURL Examples
+
+```bash
+# Authentication header
+API_KEY="your-api-key"
+BASE_URL="https://api.sim.dune.com"
+
+# Get balances
+curl -X GET "$BASE_URL/v1/evm/balances/0x..." \
+  -H "X-Sim-Api-Key: $API_KEY" \
+  -H "Content-Type: application/json"
+
+# Get activity with parameters
+curl -X GET "$BASE_URL/v1/evm/activity/0x...?limit=50&chain_ids=ethereum" \
+  -H "X-Sim-Api-Key: $API_KEY"
+
+# Handle errors
+curl -X GET "$BASE_URL/v1/evm/balances/invalid-address" \
+  -H "X-Sim-Api-Key: $API_KEY" \
+  -w "HTTP Status: %{http_code}\n" \
+  -s -o response.json
+
+# Pagination
+OFFSET=""
+while true; do
+  RESPONSE=$(curl -s -X GET "$BASE_URL/v1/evm/balances/0x...?limit=100&offset=$OFFSET" \
+    -H "X-Sim-Api-Key: $API_KEY")
+  
+  # Process response
+  echo "$RESPONSE" | jq '.balances[]'
+  
+  # Get next offset
+  OFFSET=$(echo "$RESPONSE" | jq -r '.next_offset // empty')
+  
+  # Break if no more data
+  if [ -z "$OFFSET" ]; then
+    break
+  fi
+done
+```
+
+### PHP Integration
+
+```php
+<?php
+
+class SimApiClient {
+    private $apiKey;
+    private $baseUrl;
+    private $httpClient;
+    
+    public function __construct($apiKey, $baseUrl = 'https://api.sim.dune.com') {
+        $this->apiKey = $apiKey;
+        $this->baseUrl = $baseUrl;
+        $this->httpClient = new \GuzzleHttp\Client([
+            'timeout' => 30,
+            'headers' => [
+                'X-Sim-Api-Key' => $this->apiKey,
+                'User-Agent' => 'SimAPI-PHP/1.0'
+            ]
+        ]);
+    }
+    
+    public function getBalances($address, $options = []) {
+        $url = "/v1/evm/balances/{$address}";
+        
+        if (!empty($options)) {
+            $url .= '?' . http_build_query($options);
+        }
+        
+        try {
+            $response = $this->httpClient->get($this->baseUrl . $url);
+            return json_decode($response->getBody(), true);
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->getResponse()->getStatusCode() === 429) {
+                throw new Exception('Rate limit exceeded');
+            }
+            throw new Exception('API Error: ' . $e->getMessage());
+        }
+    }
+    
+    public function getAllBalances($address) {
+        $allBalances = [];
+        $offset = null;
+        
+        do {
+            $options = ['limit' => 100];
+            if ($offset) {
+                $options['offset'] = $offset;
+            }
+            
+            $response = $this->getBalances($address, $options);
+            $allBalances = array_merge($allBalances, $response['balances']);
+            $offset = $response['next_offset'] ?? null;
+            
+        } while ($offset);
+        
+        return $allBalances;
+    }
+}
+
+// Usage
+$client = new SimApiClient('your-api-key');
+$balances = $client->getBalances('0x...');
+
+echo "Found " . count($balances['balances']) . " token balances\n";
+```
+
+### Ruby Integration
+
+```ruby
+require 'net/http'
+require 'json'
+require 'uri'
+
+class SimApiClient
+  BASE_URL = 'https://api.sim.dune.com'
+  
+  def initialize(api_key)
+    @api_key = api_key
+  end
+  
+  def get_balances(address, options = {})
+    url = "#{BASE_URL}/v1/evm/balances/#{address}"
+    url += "?#{URI.encode_www_form(options)}" unless options.empty?
+    
+    uri = URI(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    
+    request = Net::HTTP::Get.new(uri)
+    request['X-Sim-Api-Key'] = @api_key
+    request['User-Agent'] = 'SimAPI-Ruby/1.0'
+    
+    response = http.request(request)
+    
+    case response.code.to_i
+    when 200
+      JSON.parse(response.body)
+    when 429
+      raise 'Rate limit exceeded'
+    when 401
+      raise 'Authentication failed'
+    else
+      raise "API Error: #{response.code} #{response.message}"
+    end
+  end
+  
+  def get_all_balances(address)
+    all_balances = []
+    offset = nil
+    
+    loop do
+      options = { limit: 100 }
+      options[:offset] = offset if offset
+      
+      response = get_balances(address, options)
+      all_balances.concat(response['balances'])
+      
+      offset = response['next_offset']
+      break unless offset
+    end
+    
+    all_balances
+  end
+end
+
+# Usage
+client = SimApiClient.new('your-api-key')
+balances = client.get_balances('0x...')
+
+puts "Found #{balances['balances'].length} token balances"
+```
+
+---
+
+## Best Practices
+
+### Rate Limiting
+
+All SDKs implement automatic rate limiting and retry logic:
+
+```typescript
+// JavaScript - Custom retry logic
+const retryableRequest = async (fn, maxRetries = 3) => {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error instanceof RateLimitError && i < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, error.retryAfter));
+        continue;
+      }
+      throw error;
+    }
+  }
+};
+```
+
+### Caching
+
+Implement caching to reduce API calls:
+
+```python
+# Python - Simple caching
+from functools import lru_cache
+from datetime import datetime, timedelta
+
+class CachedSimClient:
+    def __init__(self, client):
+        self.client = client
+        self._cache = {}
+        self._cache_ttl = timedelta(minutes=5)
+    
+    def _is_cache_valid(self, timestamp):
+        return datetime.now() - timestamp < self._cache_ttl
+    
+    def get_balances(self, address):
+        cache_key = f"balances:{address}"
+        
+        if cache_key in self._cache:
+            data, timestamp = self._cache[cache_key]
+            if self._is_cache_valid(timestamp):
+                return data
+        
+        data = self.client.evm.balances(address)
+        self._cache[cache_key] = (data, datetime.now())
+        return data
+```
+
+### Error Handling
+
+Always implement proper error handling:
+
+```go
+// Go - Comprehensive error handling
+func safeAPICall[T any](ctx context.Context, call func() (T, error)) (T, error) {
+    var zero T
+    
+    backoff := time.Second
+    maxBackoff := 30 * time.Second
+    maxRetries := 3
+    
+    for attempt := 0; attempt <= maxRetries; attempt++ {
+        result, err := call()
+        if err == nil {
+            return result, nil
+        }
+        
+        // Check if we should retry
+        if rateLimitErr, ok := err.(*errors.RateLimitError); ok {
+            if attempt < maxRetries {
+                sleepTime := time.Duration(rateLimitErr.RetryAfter) * time.Millisecond
+                time.Sleep(sleepTime)
+                continue
+            }
+        }
+        
+        // For other errors, use exponential backoff
+        if attempt < maxRetries {
+            time.Sleep(backoff)
+            backoff *= 2
+            if backoff > maxBackoff {
+                backoff = maxBackoff
+            }
+            continue
+        }
+        
+        return zero, err
+    }
+    
+    return zero, fmt.Errorf("max retries exceeded")
+}
+```
+
+This comprehensive SDK documentation provides developers with everything they need to integrate Sim APIs into their applications, regardless of their preferred programming language or framework.
+
+---
+
+## Community and Support
+
+<CardGroup cols={2}>
+  <Card icon="github" title="SDK Source Code" href="https://github.com/duneanalytics/sim-sdks">
+    View and contribute to our open-source SDKs
+  </Card>
+  <Card icon="discord" title="Developer Community" href="https://discord.gg/dune">
+    Get help and share your implementations
+  </Card>
+  <Card icon="bug" title="Report Issues" href="https://github.com/duneanalytics/sim-sdks/issues">
+    Found a bug? Let us know!
+  </Card>
+  <Card icon="lightbulb" title="Feature Requests" href="https://github.com/duneanalytics/sim-sdks/discussions">
+    Suggest new SDK features
+  </Card>
+</CardGroup>

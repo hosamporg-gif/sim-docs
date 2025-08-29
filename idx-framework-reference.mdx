@@ -1,0 +1,1328 @@
+---
+title: "IDX Framework Reference"
+sidebarTitle: "IDX Framework"
+description: "Complete reference for the Sim IDX blockchain indexing framework including CLI, listeners, APIs, and deployment"
+---
+
+The Sim IDX framework is a comprehensive solution for building, testing, and deploying blockchain data indexers. This reference covers all components, from CLI commands to advanced listener patterns.
+
+## Framework Overview
+
+<CardGroup cols={3}>
+  <Card icon="terminal" title="CLI Commands" href="#cli-reference">
+    Complete command-line interface documentation
+  </Card>
+  <Card icon="code" title="Listener Development" href="#listener-development">
+    Building custom blockchain event listeners
+  </Card>
+  <Card icon="server" title="API Framework" href="#api-framework">
+    Creating APIs for your indexed data
+  </Card>
+</CardGroup>
+
+---
+
+## CLI Reference
+
+### Installation and Setup
+
+#### Installing the CLI
+
+```bash
+# Install via script (recommended)
+curl -L https://simcli.dune.com | bash
+
+# Verify installation
+sim --version
+
+# Update to latest version
+curl -L https://simcli.dune.com | bash
+```
+
+#### Authentication
+
+```bash
+# Set up authentication
+sim authenticate
+
+# Verify authentication
+sim auth status
+
+# View current API key (masked)
+sim auth whoami
+```
+
+### Project Management Commands
+
+#### `sim init`
+
+Initialize a new IDX application with boilerplate code.
+
+**Syntax:**
+```bash
+sim init [OPTIONS]
+```
+
+**Options:**
+- `--template <TEMPLATE>`: Use a specific template
+- `--name <NAME>`: Set project name
+- `--description <DESC>`: Set project description
+
+**Available Templates:**
+- `sample` (default): Basic Uniswap V3 pool indexer
+- `contract-decoder`: Advanced contract interaction decoder
+- `defi-tracker`: DeFi protocol activity tracker
+- `nft-marketplace`: NFT marketplace event indexer
+- `cross-chain`: Multi-chain data aggregator
+
+**Examples:**
+```bash
+# Default initialization
+mkdir my-indexer && cd my-indexer
+sim init
+
+# With specific template
+sim init --template=contract-decoder --name="My Contract Indexer"
+
+# Custom configuration
+sim init --template=defi-tracker \
+         --name="DeFi Analytics" \
+         --description="Track DeFi protocol metrics"
+```
+
+**Generated Structure:**
+```
+my-indexer/
+├── sim.toml              # Project configuration
+├── listeners/            # Solidity listener contracts
+│   ├── Listener.sol      # Main listener contract
+│   └── test/            # Test contracts
+├── apis/                # API implementation
+│   ├── src/             # TypeScript source
+│   ├── package.json     # Dependencies
+│   └── wrangler.toml    # Cloudflare Workers config
+├── .gitignore
+└── README.md
+```
+
+#### `sim build`
+
+Compile Solidity contracts using Foundry.
+
+**Syntax:**
+```bash
+sim build [OPTIONS]
+```
+
+**Options:**
+- `--watch`: Watch for file changes and rebuild
+- `--verbose`: Show detailed compilation output
+- `--clean`: Clean build cache before building
+
+**Examples:**
+```bash
+# Standard build
+sim build
+
+# Watch mode for development
+sim build --watch
+
+# Clean build
+sim build --clean --verbose
+```
+
+#### `sim test`
+
+Run Solidity tests for listener contracts.
+
+**Syntax:**
+```bash
+sim test [OPTIONS] [PATTERN]
+```
+
+**Options:**
+- `--verbose`: Show detailed test output
+- `--gas-report`: Generate gas usage report
+- `--coverage`: Generate code coverage report
+- `--fork-url <URL>`: Fork from specific blockchain URL
+- `--fork-block <BLOCK>`: Fork from specific block number
+
+**Examples:**
+```bash
+# Run all tests
+sim test
+
+# Run specific test pattern
+sim test "test_pool_creation"
+
+# Run with gas reporting
+sim test --gas-report --verbose
+
+# Fork testing from mainnet
+sim test --fork-url https://eth-mainnet.alchemyapi.io/v2/YOUR-KEY \
+         --fork-block 18500000
+```
+
+### Listener Management
+
+#### `sim listeners evaluate`
+
+Test listener contracts against real blockchain data.
+
+**Syntax:**
+```bash
+sim listeners evaluate [OPTIONS]
+```
+
+**Required Options:**
+- `--start-block <BLOCK>`: Starting block number
+- `--chain-id <ID>`: Chain ID to evaluate against
+
+**Optional Options:**
+- `--end-block <BLOCK>`: Ending block number (default: start-block)
+- `--limit <COUNT>`: Maximum number of blocks to process
+- `--listener <NAME>`: Specific listener to evaluate
+- `--verbose`: Show detailed processing information
+- `--dry-run`: Simulate without persisting data
+
+**Examples:**
+```bash
+# Evaluate single block
+sim listeners evaluate --start-block 18500000 --chain-id 1
+
+# Evaluate block range
+sim listeners evaluate \
+  --start-block 18500000 \
+  --end-block 18500100 \
+  --chain-id 1
+
+# Evaluate specific listener
+sim listeners evaluate \
+  --start-block 18500000 \
+  --chain-id 1 \
+  --listener PoolCreationListener \
+  --verbose
+
+# Dry run evaluation
+sim listeners evaluate \
+  --start-block 18500000 \
+  --chain-id 1 \
+  --dry-run
+```
+
+#### `sim listeners list`
+
+List all available listeners in the project.
+
+```bash
+# List all listeners
+sim listeners list
+
+# List with details
+sim listeners list --verbose
+
+# Filter by pattern
+sim listeners list --pattern "Pool*"
+```
+
+#### `sim listeners validate`
+
+Validate listener contract syntax and structure.
+
+```bash
+# Validate all listeners
+sim listeners validate
+
+# Validate specific listener
+sim listeners validate --listener PoolCreationListener
+
+# Validate with detailed output
+sim listeners validate --verbose
+```
+
+### Deployment Commands
+
+#### `sim deploy`
+
+Deploy your IDX application to the Sim platform.
+
+**Syntax:**
+```bash
+sim deploy [OPTIONS]
+```
+
+**Options:**
+- `--environment <ENV>`: Target environment (staging/production)
+- `--watch`: Monitor deployment progress
+- `--no-build`: Skip build step
+- `--dry-run`: Validate deployment without executing
+
+**Examples:**
+```bash
+# Deploy to staging
+sim deploy --environment staging
+
+# Deploy to production
+sim deploy --environment production --watch
+
+# Validate deployment
+sim deploy --dry-run
+```
+
+#### `sim deploy status`
+
+Check deployment status and health.
+
+```bash
+# Check current deployment
+sim deploy status
+
+# Check specific environment
+sim deploy status --environment production
+
+# Detailed status information
+sim deploy status --verbose
+```
+
+### Database Management
+
+#### `sim db migrate`
+
+Manage database schema migrations.
+
+```bash
+# Run pending migrations
+sim db migrate
+
+# Rollback last migration
+sim db migrate --rollback
+
+# Show migration status
+sim db migrate --status
+
+# Create new migration
+sim db migrate --create "add_new_index"
+```
+
+#### `sim db seed`
+
+Seed database with test data.
+
+```bash
+# Run all seeders
+sim db seed
+
+# Run specific seeder
+sim db seed --seeder TestDataSeeder
+
+# Seed with custom data
+sim db seed --file custom-data.json
+```
+
+### Development Tools
+
+#### `sim logs`
+
+View application logs and debugging information.
+
+**Syntax:**
+```bash
+sim logs [OPTIONS]
+```
+
+**Options:**
+- `--follow`: Follow log output in real-time
+- `--lines <COUNT>`: Number of lines to show
+- `--level <LEVEL>`: Filter by log level (debug/info/warn/error)
+- `--component <COMP>`: Filter by component (listener/api/system)
+
+**Examples:**
+```bash
+# View recent logs
+sim logs --lines 100
+
+# Follow logs in real-time
+sim logs --follow
+
+# Filter by level and component
+sim logs --level error --component listener --follow
+```
+
+#### `sim config`
+
+Manage project configuration.
+
+```bash
+# Show current configuration
+sim config show
+
+# Set configuration value
+sim config set chains "1,137,42161"
+
+# Get specific configuration
+sim config get api.timeout
+
+# Validate configuration
+sim config validate
+```
+
+---
+
+## Listener Development
+
+### Listener Contract Structure
+
+#### Basic Listener Template
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "sim-idx/Listener.sol";
+
+contract MyListener is Listener {
+    // Events that will create database tables
+    event DataCaptured(
+        address indexed contract_address,
+        uint256 indexed block_number,
+        uint256 timestamp,
+        bytes32 data_hash
+    );
+    
+    // Required: Process blockchain events
+    function process(
+        address contractAddress,
+        bytes calldata data
+    ) external override {
+        // Decode and process event data
+        emit DataCaptured(
+            contractAddress,
+            block.number,
+            block.timestamp,
+            keccak256(data)
+        );
+    }
+    
+    // Required: Filter which contracts to process
+    function filter(address contractAddress) external view override returns (bool) {
+        // Define your filtering logic
+        return true; // Process all contracts
+    }
+}
+```
+
+#### Advanced Listener Example
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "sim-idx/Listener.sol";
+
+contract DeFiProtocolListener is Listener {
+    // Protocol-specific events
+    event PoolCreated(
+        address indexed token0,
+        address indexed token1,
+        uint24 indexed fee,
+        address pool,
+        uint256 block_number,
+        uint256 timestamp
+    );
+    
+    event SwapExecuted(
+        address indexed pool,
+        address indexed trader,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 block_number,
+        uint256 timestamp
+    );
+    
+    event LiquidityChanged(
+        address indexed pool,
+        address indexed provider,
+        uint128 liquidity,
+        bool isAdd,
+        uint256 block_number,
+        uint256 timestamp
+    );
+    
+    // Supported protocol contracts
+    mapping(address => bool) public supportedProtocols;
+    mapping(bytes4 => string) public functionSelectors;
+    
+    constructor() {
+        // Initialize supported protocols
+        _initializeProtocols();
+        _initializeFunctionSelectors();
+    }
+    
+    function process(
+        address contractAddress,
+        bytes calldata data
+    ) external override {
+        if (!supportedProtocols[contractAddress]) {
+            return;
+        }
+        
+        // Extract function selector
+        bytes4 selector = bytes4(data[:4]);
+        
+        // Route to appropriate handler
+        if (selector == bytes4(keccak256("createPool(address,address,uint24)"))) {
+            _processPoolCreation(contractAddress, data[4:]);
+        } else if (selector == bytes4(keccak256("swap(address,bool,int256,uint160,bytes)"))) {
+            _processSwap(contractAddress, data[4:]);
+        } else if (selector == bytes4(keccak256("mint(address,int24,int24,uint128,bytes)"))) {
+            _processLiquidityAdd(contractAddress, data[4:]);
+        } else if (selector == bytes4(keccak256("burn(int24,int24,uint128)"))) {
+            _processLiquidityRemove(contractAddress, data[4:]);
+        }
+    }
+    
+    function _processPoolCreation(address factory, bytes calldata data) internal {
+        (address tokenA, address tokenB, uint24 fee) = 
+            abi.decode(data, (address, address, uint24));
+        
+        // Calculate pool address (simplified)
+        address pool = _calculatePoolAddress(tokenA, tokenB, fee);
+        
+        emit PoolCreated(
+            tokenA,
+            tokenB,
+            fee,
+            pool,
+            block.number,
+            block.timestamp
+        );
+    }
+    
+    function _processSwap(address pool, bytes calldata data) internal {
+        (
+            address recipient,
+            bool zeroForOne,
+            int256 amountSpecified,
+            uint160 sqrtPriceLimitX96,
+            bytes memory callbackData
+        ) = abi.decode(data, (address, bool, int256, uint160, bytes));
+        
+        // Decode callback data to get actual trade details
+        (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = 
+            _decodeSwapCallback(callbackData);
+        
+        emit SwapExecuted(
+            pool,
+            recipient,
+            tokenIn,
+            tokenOut,
+            amountIn,
+            amountOut,
+            block.number,
+            block.timestamp
+        );
+    }
+    
+    function _processLiquidityAdd(address pool, bytes calldata data) internal {
+        (
+            address recipient,
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 amount,
+            bytes memory callbackData
+        ) = abi.decode(data, (address, int24, int24, uint128, bytes));
+        
+        emit LiquidityChanged(
+            pool,
+            recipient,
+            amount,
+            true, // isAdd
+            block.number,
+            block.timestamp
+        );
+    }
+    
+    function _processLiquidityRemove(address pool, bytes calldata data) internal {
+        (int24 tickLower, int24 tickUpper, uint128 amount) = 
+            abi.decode(data, (int24, int24, uint128));
+        
+        emit LiquidityChanged(
+            pool,
+            msg.sender, // Assuming the caller is the liquidity provider
+            amount,
+            false, // isAdd
+            block.number,
+            block.timestamp
+        );
+    }
+    
+    function filter(address contractAddress) external view override returns (bool) {
+        return supportedProtocols[contractAddress];
+    }
+    
+    function _initializeProtocols() internal {
+        // Uniswap V3
+        supportedProtocols[0x1F98431c8aD98523631AE4a59f267346ea31F984] = true; // Factory
+        supportedProtocols[0xE592427A0AEce92De3Edee1F18E0157C05861564] = true; // Router
+        
+        // Add more protocols as needed
+    }
+    
+    function _initializeFunctionSelectors() internal {
+        functionSelectors[bytes4(keccak256("createPool(address,address,uint24)"))] = "createPool";
+        functionSelectors[bytes4(keccak256("swap(address,bool,int256,uint160,bytes)"))] = "swap";
+        // Add more selectors as needed
+    }
+    
+    function _calculatePoolAddress(address tokenA, address tokenB, uint24 fee) 
+        internal 
+        pure 
+        returns (address) 
+    {
+        // Simplified pool address calculation
+        return address(uint160(uint256(keccak256(abi.encodePacked(tokenA, tokenB, fee)))));
+    }
+    
+    function _decodeSwapCallback(bytes memory data) 
+        internal 
+        pure 
+        returns (address, address, uint256, uint256) 
+    {
+        // Decode swap callback data to extract trade details
+        // Implementation depends on specific protocol callback format
+        return (address(0), address(0), 0, 0);
+    }
+}
+```
+
+### Testing Listeners
+
+#### Unit Testing Framework
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "forge-std/Test.sol";
+import "../Listener.sol";
+
+contract ListenerTest is Test {
+    DeFiProtocolListener public listener;
+    
+    // Test addresses
+    address constant UNISWAP_V3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address constant USDC = 0xA0b86a33E6ba4D8a6c81Ca24c4F05d5c8f5b6F2e;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    
+    function setUp() public {
+        listener = new DeFiProtocolListener();
+    }
+    
+    function testFilterValidProtocol() public {
+        assertTrue(listener.filter(UNISWAP_V3_FACTORY));
+    }
+    
+    function testFilterInvalidProtocol() public {
+        assertFalse(listener.filter(address(0x1234)));
+    }
+    
+    function testProcessPoolCreation() public {
+        // Encode pool creation data
+        bytes memory data = abi.encodeWithSignature(
+            "createPool(address,address,uint24)",
+            USDC,
+            WETH,
+            3000
+        );
+        
+        // Expect PoolCreated event
+        vm.expectEmit(true, true, true, false);
+        emit PoolCreated(
+            USDC,
+            WETH,
+            3000,
+            address(0), // Calculated address
+            block.number,
+            block.timestamp
+        );
+        
+        listener.process(UNISWAP_V3_FACTORY, data);
+    }
+    
+    function testProcessSwap() public {
+        bytes memory swapData = abi.encodeWithSignature(
+            "swap(address,bool,int256,uint160,bytes)",
+            address(this),
+            true,
+            1000000, // 1 USDC
+            0,
+            abi.encode(USDC, WETH, 1000000, 500000) // Mock callback data
+        );
+        
+        vm.expectEmit(true, true, false, false);
+        emit SwapExecuted(
+            address(0x1234), // Mock pool
+            address(this),
+            USDC,
+            WETH,
+            1000000,
+            500000,
+            block.number,
+            block.timestamp
+        );
+        
+        listener.process(address(0x1234), swapData);
+    }
+    
+    function testGasUsage() public {
+        bytes memory data = abi.encodeWithSignature(
+            "createPool(address,address,uint24)",
+            USDC,
+            WETH,
+            3000
+        );
+        
+        uint256 gasBefore = gasleft();
+        listener.process(UNISWAP_V3_FACTORY, data);
+        uint256 gasUsed = gasBefore - gasleft();
+        
+        // Ensure gas usage is reasonable
+        assertLt(gasUsed, 100000, "Gas usage too high");
+    }
+    
+    function testFuzzProcessing(address token0, address token1, uint24 fee) public {
+        vm.assume(token0 != address(0) && token1 != address(0));
+        vm.assume(token0 != token1);
+        vm.assume(fee <= 1000000); // 100% max fee
+        
+        bytes memory data = abi.encodeWithSignature(
+            "createPool(address,address,uint24)",
+            token0,
+            token1,
+            fee
+        );
+        
+        // Should not revert
+        listener.process(UNISWAP_V3_FACTORY, data);
+    }
+}
+```
+
+#### Integration Testing
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "forge-std/Test.sol";
+import "../Listener.sol";
+
+contract ListenerIntegrationTest is Test {
+    DeFiProtocolListener public listener;
+    
+    // Fork testing against mainnet
+    function setUp() public {
+        // Fork from specific block with known transactions
+        vm.createFork("https://eth-mainnet.alchemyapi.io/v2/YOUR-KEY", 18500000);
+        listener = new DeFiProtocolListener();
+    }
+    
+    function testRealPoolCreation() public {
+        // Use real transaction data from block 18500000
+        bytes memory realTxData = hex"13af40300000000000000000000000006b175474e89094c44da98b954eedeac495271d0f000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000000000000000000000000000000000000000000bb8";
+        
+        vm.expectEmit(true, true, true, false);
+        emit PoolCreated(
+            0x6B175474E89094C44Da98b954EedeAC495271d0F, // DAI
+            0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, // WETH
+            3000,
+            address(0), // Calculated
+            block.number,
+            block.timestamp
+        );
+        
+        listener.process(0x1F98431c8aD98523631AE4a59f267346ea31F984, realTxData);
+    }
+    
+    function testProcessBlockRange() public {
+        // Process entire block range
+        uint256 startBlock = 18500000;
+        uint256 endBlock = 18500010;
+        
+        for (uint256 blockNum = startBlock; blockNum <= endBlock; blockNum++) {
+            vm.rollFork(blockNum);
+            
+            // Get all transactions in this block and process relevant ones
+            // This would typically be done by the IDX framework
+            _processBlockTransactions(blockNum);
+        }
+    }
+    
+    function _processBlockTransactions(uint256 blockNumber) internal {
+        // Mock processing transactions in a block
+        // In real implementation, this would iterate through all transactions
+        // and call listener.process() for relevant ones
+    }
+}
+```
+
+---
+
+## API Framework
+
+### Application Structure
+
+#### Basic API Setup
+
+```typescript
+// apis/src/index.ts
+import { App, db, types } from "sim-idx";
+import { eq, desc, and, gte, lte, count, sql } from "drizzle-orm";
+
+// Import generated schema from your listeners
+import { 
+  poolCreated, 
+  swapExecuted, 
+  liquidityChanged 
+} from "./db/schema/DeFiProtocolListener";
+
+// Create application instance
+const app = App.create({
+  cors: {
+    origin: ['https://yourdomain.com'],
+    credentials: true
+  }
+});
+
+// Middleware for request logging
+app.use(async (c, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+  console.log(`${c.req.method} ${c.req.url} - ${ms}ms`);
+});
+
+export default app;
+```
+
+#### Database Schema Integration
+
+The IDX framework automatically generates TypeScript schemas from your listener events:
+
+```typescript
+// Auto-generated: apis/src/db/schema/DeFiProtocolListener.ts
+import { pgTable, varchar, bigint, timestamp, boolean, index } from "drizzle-orm/pg-core";
+
+export const poolCreated = pgTable("pool_created", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  block_number: bigint("block_number", { mode: "number" }).notNull(),
+  transaction_hash: varchar("transaction_hash", { length: 66 }).notNull(),
+  timestamp: timestamp("timestamp").notNull(),
+  token0: varchar("token0", { length: 42 }).notNull(),
+  token1: varchar("token1", { length: 42 }).notNull(),
+  fee: bigint("fee", { mode: "number" }).notNull(),
+  pool: varchar("pool", { length: 42 }).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull()
+}, (table) => ({
+  blockNumberIdx: index("pool_created_block_number_idx").on(table.block_number),
+  timestampIdx: index("pool_created_timestamp_idx").on(table.timestamp),
+  token0Idx: index("pool_created_token0_idx").on(table.token0),
+  token1Idx: index("pool_created_token1_idx").on(table.token1),
+  poolIdx: index("pool_created_pool_idx").on(table.pool)
+}));
+
+export const swapExecuted = pgTable("swap_executed", {
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+  block_number: bigint("block_number", { mode: "number" }).notNull(),
+  transaction_hash: varchar("transaction_hash", { length: 66 }).notNull(),
+  timestamp: timestamp("timestamp").notNull(),
+  pool: varchar("pool", { length: 42 }).notNull(),
+  trader: varchar("trader", { length: 42 }).notNull(),
+  token_in: varchar("token_in", { length: 42 }).notNull(),
+  token_out: varchar("token_out", { length: 42 }).notNull(),
+  amount_in: bigint("amount_in", { mode: "bigint" }).notNull(),
+  amount_out: bigint("amount_out", { mode: "bigint" }).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull()
+}, (table) => ({
+  poolIdx: index("swap_executed_pool_idx").on(table.pool),
+  traderIdx: index("swap_executed_trader_idx").on(table.trader),
+  timestampIdx: index("swap_executed_timestamp_idx").on(table.timestamp),
+  tokenInIdx: index("swap_executed_token_in_idx").on(table.token_in),
+  tokenOutIdx: index("swap_executed_token_out_idx").on(table.token_out)
+}));
+```
+
+### API Endpoints
+
+#### Basic CRUD Operations
+
+```typescript
+// Get all pools
+app.get('/api/pools', async (c) => {
+  try {
+    const limit = Math.min(parseInt(c.req.query('limit') || '100'), 1000);
+    const offset = parseInt(c.req.query('offset') || '0');
+    
+    const pools = await db.client(c)
+      .select()
+      .from(poolCreated)
+      .orderBy(desc(poolCreated.timestamp))
+      .limit(limit)
+      .offset(offset);
+    
+    return c.json({
+      pools,
+      pagination: {
+        limit,
+        offset,
+        total: pools.length
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching pools:', error);
+    return c.json({ error: 'Failed to fetch pools' }, 500);
+  }
+});
+
+// Get pool by address
+app.get('/api/pools/:address', async (c) => {
+  try {
+    const address = c.req.param('address');
+    
+    const pool = await db.client(c)
+      .select()
+      .from(poolCreated)
+      .where(eq(poolCreated.pool, address))
+      .limit(1);
+    
+    if (pool.length === 0) {
+      return c.json({ error: 'Pool not found' }, 404);
+    }
+    
+    return c.json({ pool: pool[0] });
+  } catch (error) {
+    console.error('Error fetching pool:', error);
+    return c.json({ error: 'Failed to fetch pool' }, 500);
+  }
+});
+
+// Get swaps for a pool
+app.get('/api/pools/:address/swaps', async (c) => {
+  try {
+    const address = c.req.param('address');
+    const limit = Math.min(parseInt(c.req.query('limit') || '100'), 1000);
+    const startTime = c.req.query('start_time');
+    const endTime = c.req.query('end_time');
+    
+    let query = db.client(c)
+      .select()
+      .from(swapExecuted)
+      .where(eq(swapExecuted.pool, address));
+    
+    // Add time filtering if provided
+    if (startTime) {
+      query = query.where(
+        and(
+          eq(swapExecuted.pool, address),
+          gte(swapExecuted.timestamp, new Date(startTime))
+        )
+      );
+    }
+    
+    if (endTime) {
+      query = query.where(
+        and(
+          eq(swapExecuted.pool, address),
+          lte(swapExecuted.timestamp, new Date(endTime))
+        )
+      );
+    }
+    
+    const swaps = await query
+      .orderBy(desc(swapExecuted.timestamp))
+      .limit(limit);
+    
+    return c.json({ swaps });
+  } catch (error) {
+    console.error('Error fetching swaps:', error);
+    return c.json({ error: 'Failed to fetch swaps' }, 500);
+  }
+});
+```
+
+#### Analytics Endpoints
+
+```typescript
+// Pool analytics
+app.get('/api/analytics/pools', async (c) => {
+  try {
+    const timeframe = c.req.query('timeframe') || '24h';
+    const startTime = getTimeAgo(timeframe);
+    
+    const client = db.client(c);
+    
+    // Pool creation metrics
+    const poolMetrics = await client
+      .select({
+        totalPools: count(poolCreated.id),
+        newPools: sql<number>`count(case when ${poolCreated.timestamp} >= ${startTime} then 1 end)`,
+        avgPoolsPerDay: sql<number>`count(*) / extract(days from (now() - min(${poolCreated.timestamp})))`
+      })
+      .from(poolCreated);
+    
+    // Top pools by volume
+    const topPools = await client
+      .select({
+        pool: swapExecuted.pool,
+        swapCount: count(swapExecuted.id),
+        totalVolumeIn: sql<string>`sum(${swapExecuted.amount_in})`,
+        totalVolumeOut: sql<string>`sum(${swapExecuted.amount_out})`
+      })
+      .from(swapExecuted)
+      .where(gte(swapExecuted.timestamp, startTime))
+      .groupBy(swapExecuted.pool)
+      .orderBy(desc(sql`sum(${swapExecuted.amount_in})`))
+      .limit(10);
+    
+    // Trading activity over time
+    const activityByHour = await client
+      .select({
+        hour: sql<string>`date_trunc('hour', ${swapExecuted.timestamp})`,
+        swapCount: count(swapExecuted.id),
+        volume: sql<string>`sum(${swapExecuted.amount_in})`
+      })
+      .from(swapExecuted)
+      .where(gte(swapExecuted.timestamp, startTime))
+      .groupBy(sql`date_trunc('hour', ${swapExecuted.timestamp})`)
+      .orderBy(sql`date_trunc('hour', ${swapExecuted.timestamp})`);
+    
+    return c.json({
+      timeframe,
+      metrics: poolMetrics[0],
+      topPools,
+      activityByHour,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    return c.json({ error: 'Failed to generate analytics' }, 500);
+  }
+});
+
+// Trader analytics
+app.get('/api/analytics/traders', async (c) => {
+  try {
+    const limit = Math.min(parseInt(c.req.query('limit') || '50'), 100);
+    const timeframe = c.req.query('timeframe') || '7d';
+    const startTime = getTimeAgo(timeframe);
+    
+    const topTraders = await db.client(c)
+      .select({
+        trader: swapExecuted.trader,
+        swapCount: count(swapExecuted.id),
+        totalVolume: sql<string>`sum(${swapExecuted.amount_in})`,
+        avgSwapSize: sql<string>`avg(${swapExecuted.amount_in})`,
+        firstTrade: sql<string>`min(${swapExecuted.timestamp})`,
+        lastTrade: sql<string>`max(${swapExecuted.timestamp})`
+      })
+      .from(swapExecuted)
+      .where(gte(swapExecuted.timestamp, startTime))
+      .groupBy(swapExecuted.trader)
+      .orderBy(desc(sql`sum(${swapExecuted.amount_in})`))
+      .limit(limit);
+    
+    return c.json({
+      timeframe,
+      traders: topTraders,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Trader analytics error:', error);
+    return c.json({ error: 'Failed to generate trader analytics' }, 500);
+  }
+});
+```
+
+#### Real-time Endpoints
+
+```typescript
+// WebSocket endpoint for real-time updates
+app.get('/api/ws/swaps', async (c) => {
+  // Upgrade to WebSocket
+  const upgrade = c.req.header('upgrade');
+  if (upgrade !== 'websocket') {
+    return c.text('Expected websocket', 426);
+  }
+  
+  const { response, socket } = Deno.upgradeWebSocket(c.req.raw);
+  
+  socket.onopen = () => {
+    console.log('WebSocket connection opened');
+    
+    // Send initial data
+    socket.send(JSON.stringify({
+      type: 'connected',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Start sending updates
+    startRealtimeUpdates(socket);
+  };
+  
+  socket.onmessage = (event) => {
+    console.log('WebSocket message:', event.data);
+  };
+  
+  socket.onclose = () => {
+    console.log('WebSocket connection closed');
+  };
+  
+  return response;
+});
+
+async function startRealtimeUpdates(socket: WebSocket) {
+  let lastCheck = new Date();
+  
+  setInterval(async () => {
+    try {
+      // Get new swaps since last check
+      const newSwaps = await db.client()
+        .select()
+        .from(swapExecuted)
+        .where(gte(swapExecuted.timestamp, lastCheck))
+        .orderBy(desc(swapExecuted.timestamp))
+        .limit(50);
+      
+      if (newSwaps.length > 0) {
+        socket.send(JSON.stringify({
+          type: 'swaps',
+          data: newSwaps,
+          timestamp: new Date().toISOString()
+        }));
+        
+        lastCheck = new Date(newSwaps[0].timestamp);
+      }
+    } catch (error) {
+      console.error('Real-time update error:', error);
+    }
+  }, 5000); // Check every 5 seconds
+}
+
+// Server-sent events endpoint
+app.get('/api/events/swaps', async (c) => {
+  const stream = new ReadableStream({
+    start(controller) {
+      // Send initial connection event
+      const data = `data: ${JSON.stringify({ 
+        type: 'connected', 
+        timestamp: new Date().toISOString() 
+      })}\n\n`;
+      controller.enqueue(new TextEncoder().encode(data));
+      
+      // Set up periodic updates
+      const interval = setInterval(async () => {
+        try {
+          const recentSwaps = await db.client(c)
+            .select()
+            .from(swapExecuted)
+            .orderBy(desc(swapExecuted.timestamp))
+            .limit(10);
+          
+          const eventData = `data: ${JSON.stringify({
+            type: 'swaps',
+            data: recentSwaps,
+            timestamp: new Date().toISOString()
+          })}\n\n`;
+          
+          controller.enqueue(new TextEncoder().encode(eventData));
+        } catch (error) {
+          console.error('SSE error:', error);
+        }
+      }, 10000); // Update every 10 seconds
+      
+      // Clean up on close
+      return () => {
+        clearInterval(interval);
+      };
+    }
+  });
+  
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    }
+  });
+});
+```
+
+### Helper Functions
+
+```typescript
+// Time utility functions
+function getTimeAgo(timeframe: string): Date {
+  const now = new Date();
+  
+  switch (timeframe) {
+    case '1h': return new Date(now.getTime() - 60 * 60 * 1000);
+    case '24h': return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    case '7d': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    case '30d': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    default: return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  }
+}
+
+// Validation middleware
+const validateAddress = (address: string): boolean => {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+};
+
+app.use('/api/pools/:address/*', async (c, next) => {
+  const address = c.req.param('address');
+  if (!validateAddress(address)) {
+    return c.json({ error: 'Invalid address format' }, 400);
+  }
+  await next();
+});
+
+// Error handling middleware
+app.onError((err, c) => {
+  console.error('API Error:', err);
+  
+  if (err.name === 'ValidationError') {
+    return c.json({ error: err.message }, 400);
+  }
+  
+  if (err.name === 'DatabaseError') {
+    return c.json({ error: 'Database connection failed' }, 503);
+  }
+  
+  return c.json({ 
+    error: 'Internal server error',
+    requestId: c.req.header('x-request-id') || 'unknown'
+  }, 500);
+});
+
+// Health check endpoint
+app.get('/health', async (c) => {
+  try {
+    // Test database connection
+    await db.client(c).select().from(poolCreated).limit(1);
+    
+    return c.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    return c.json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }, 503);
+  }
+});
+```
+
+---
+
+## Configuration Reference
+
+### Project Configuration (`sim.toml`)
+
+```toml
+[project]
+name = "my-defi-indexer"
+description = "DeFi protocol activity indexer"
+version = "1.0.0"
+license = "MIT"
+
+[indexing]
+# Chains to index
+chains = [1, 137, 42161, 10, 8453]
+
+# Contracts to monitor (optional, if empty monitors all)
+contracts = [
+  "0x1F98431c8aD98523631AE4a59f267346ea31F984",  # Uniswap V3 Factory
+  "0xE592427A0AEce92De3Edee1F18E0157C05861564"   # Uniswap V3 Router
+]
+
+# Block range settings
+start_block = "latest"  # or specific block number
+batch_size = 100
+confirmation_blocks = 12
+
+[database]
+# Automatic migrations
+auto_migrate = true
+
+# Connection pool settings
+max_connections = 20
+idle_timeout = "5m"
+
+# Performance settings
+query_timeout = "30s"
+bulk_insert_size = 1000
+
+[api]
+# CORS settings
+cors_origins = ["*"]
+cors_methods = ["GET", "POST", "OPTIONS"]
+
+# Rate limiting
+rate_limit = 1000  # requests per minute
+burst_limit = 100  # burst capacity
+
+# Caching
+cache_ttl = "5m"
+cache_size = 1000
+
+[monitoring]
+# Logging configuration
+log_level = "info"
+log_format = "json"
+
+# Metrics
+enable_metrics = true
+metrics_port = 9090
+
+# Health checks
+health_check_interval = "30s"
+
+[deployment]
+# Environment-specific settings
+[deployment.staging]
+database_url = "postgresql://user:pass@staging-db:5432/indexer"
+api_url = "https://staging-api.example.com"
+
+[deployment.production]
+database_url = "postgresql://user:pass@prod-db:5432/indexer"
+api_url = "https://api.example.com"
+replicas = 3
+auto_scale = true
+```
+
+This comprehensive IDX framework reference provides everything needed to build, test, and deploy blockchain data indexers using the Sim IDX platform. From CLI commands to advanced listener patterns and API development, this documentation serves as a complete guide for the framework.
+
+---
+
+## Support and Resources
+
+<CardGroup cols={2}>
+  <Card icon="book" title="Framework Guides" href="/idx/guides">
+    Step-by-step tutorials and examples
+  </Card>
+  <Card icon="github" title="Source Code" href="https://github.com/duneanalytics/sim-idx">
+    Framework source code and examples
+  </Card>
+  <Card icon="discord" title="Community" href="https://discord.gg/dune">
+    Get help from the developer community
+  </Card>
+  <Card icon="life-ring" title="Support" href="/support">
+    Professional support and consulting
+  </Card>
+</CardGroup>

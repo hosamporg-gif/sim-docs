@@ -1,0 +1,775 @@
+---
+title: "Component Reference"
+sidebarTitle: "Components"
+description: "Complete documentation for all UI components, layouts, and interactive elements in the Sim documentation system"
+---
+
+This reference documents all available UI components used throughout the Sim documentation. These components are built on Mintlify's documentation framework and provide a consistent, interactive experience.
+
+## Navigation
+
+<CardGroup cols={4}>
+  <Card icon="layout" title="Layout Components" href="#layout-components">
+    Structural and organizational components
+  </Card>
+  <Card icon="window" title="Content Components" href="#content-components">
+    Text, media, and information display
+  </Card>
+  <Card icon="mouse-pointer" title="Interactive Components" href="#interactive-components">
+    Buttons, links, and user interaction elements
+  </Card>
+  <Card icon="code" title="Code Components" href="#code-components">
+    Code display and syntax highlighting
+  </Card>
+</CardGroup>
+
+---
+
+## Layout Components
+
+### CardGroup
+
+Groups multiple cards in a responsive grid layout.
+
+**Props:**
+- `cols` (number): Number of columns (1-4, default: 2)
+
+**Usage:**
+```mdx
+<CardGroup cols={3}>
+  <Card title="First Card" />
+  <Card title="Second Card" />
+  <Card title="Third Card" />
+</CardGroup>
+```
+
+**Example:**
+<CardGroup cols={2}>
+  <Card icon="star" title="Featured Item" href="#example">
+    This is a featured card example
+  </Card>
+  <Card icon="heart" title="Popular Item" href="#example">
+    This is a popular card example
+  </Card>
+</CardGroup>
+
+### Card
+
+Individual card component for highlighting content or navigation.
+
+**Props:**
+- `title` (string): Card title text
+- `icon` (string): Icon name from Font Awesome or custom icons
+- `iconType` (string): Icon type ('solid', 'regular', 'light', 'brands')
+- `href` (string): Link destination (internal or external)
+- `horizontal` (boolean): Display as horizontal layout
+- `color` (string): Custom color theme
+
+**Usage:**
+```mdx
+<!-- Basic card -->
+<Card title="Getting Started" href="/quickstart">
+  Learn the basics of using Sim APIs
+</Card>
+
+<!-- Card with icon -->
+<Card icon="ethereum" title="EVM APIs" href="/evm/overview">
+  Access Ethereum and EVM-compatible blockchain data
+</Card>
+
+<!-- Horizontal card -->
+<Card title="GitHub Repository" icon="github" horizontal href="https://github.com/example">
+  View the source code
+</Card>
+
+<!-- Custom color -->
+<Card title="Premium Feature" color="green" icon="crown">
+  Available for Pro users
+</Card>
+```
+
+### Columns
+
+Creates a responsive column layout for content.
+
+**Props:**
+- `cols` (number): Number of columns (1-4, default: 2)
+
+**Usage:**
+```mdx
+<Columns cols={2}>
+  <div>
+    Content for first column
+  </div>
+  <div>
+    Content for second column
+  </div>
+</Columns>
+```
+
+### Frame
+
+Wraps content with a styled frame, commonly used for images and videos.
+
+**Props:**
+- `caption` (string): Caption text below the frame
+- `type` (string): Frame style ('default', 'glass', 'simple')
+
+**Usage:**
+```mdx
+<Frame caption="API Dashboard Screenshot">
+  <img src="/images/dashboard.png" alt="Dashboard" />
+</Frame>
+
+<!-- Video frame -->
+<Frame caption="Tutorial walkthrough">
+  <video controls>
+    <source src="/videos/tutorial.mp4" type="video/mp4" />
+  </video>
+</Frame>
+```
+
+---
+
+## Content Components
+
+### Note
+
+Displays important information in a highlighted box.
+
+**Props:**
+- `type` (string): Note type ('info', 'warning', 'tip', 'caution')
+
+**Usage:**
+```mdx
+<Note>
+Default note with important information.
+</Note>
+
+<Note type="warning">
+This is a warning message about potential issues.
+</Note>
+
+<Note type="tip">
+Pro tip: Use this feature to improve performance.
+</Note>
+```
+
+**Examples:**
+<Note>
+This is a default note with general information.
+</Note>
+
+<Warning>
+This is a warning about potential security risks.
+</Warning>
+
+<Tip>
+Pro tip: Always validate user input before processing.
+</Tip>
+
+### Info
+
+Alias for Note component with 'info' type.
+
+**Usage:**
+```mdx
+<Info>
+Additional context or helpful information.
+</Info>
+```
+
+### Warning
+
+Displays warning messages with appropriate styling.
+
+**Usage:**
+```mdx
+<Warning>
+Be careful when using this API endpoint in production.
+</Warning>
+```
+
+### Tip
+
+Shows helpful tips and best practices.
+
+**Usage:**
+```mdx
+<Tip>
+Use pagination to improve performance with large datasets.
+</Tip>
+```
+
+### Steps
+
+Creates a numbered step-by-step guide.
+
+**Usage:**
+```mdx
+<Steps>
+  <Step title="Install Dependencies">
+    Run `npm install` to install required packages.
+  </Step>
+  <Step title="Configure API Key">
+    Add your API key to the environment variables.
+  </Step>
+  <Step title="Start Development Server">
+    Run `npm run dev` to start the development server.
+  </Step>
+</Steps>
+```
+
+### Step
+
+Individual step within a Steps component.
+
+**Props:**
+- `title` (string): Step title
+- `stepNumber` (number): Optional custom step number
+
+**Usage:**
+```mdx
+<Step title="Setup Database">
+  Create your database connection and tables.
+</Step>
+
+<Step title="Custom Step" stepNumber={5}>
+  This step will be numbered as step 5.
+</Step>
+```
+
+---
+
+## Interactive Components
+
+### Accordion
+
+Collapsible content sections for organizing information.
+
+**Props:**
+- `title` (string): Accordion header title
+- `icon` (string): Header icon
+- `defaultOpen` (boolean): Whether accordion starts open
+
+**Usage:**
+```mdx
+<Accordion title="Advanced Configuration" icon="cog">
+  Detailed configuration options and advanced settings.
+</Accordion>
+
+<Accordion title="FAQ Section" defaultOpen>
+  Frequently asked questions and answers.
+</Accordion>
+```
+
+### Tabs
+
+Tab interface for organizing related content.
+
+**Props:**
+- `defaultTab` (string): Default active tab
+
+**Usage:**
+```mdx
+<Tabs defaultTab="javascript">
+  <Tab title="JavaScript">
+    ```javascript
+    console.log('Hello World');
+    ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    print('Hello World')
+    ```
+  </Tab>
+  <Tab title="cURL">
+    ```bash
+    curl -X GET "https://api.example.com"
+    ```
+  </Tab>
+</Tabs>
+```
+
+### Tab
+
+Individual tab within a Tabs component.
+
+**Props:**
+- `title` (string): Tab title
+
+---
+
+## Code Components
+
+### CodeGroup
+
+Groups multiple code blocks with language switching.
+
+**Usage:**
+```mdx
+<CodeGroup>
+```bash cURL
+curl -X GET "https://api.sim.dune.com/v1/evm/balances/ADDRESS" \
+     -H "X-Sim-Api-Key: YOUR_API_KEY"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.sim.dune.com/v1/evm/balances/ADDRESS', {
+  headers: { 'X-Sim-Api-Key': 'YOUR_API_KEY' }
+});
+```
+
+```python Python
+import requests
+response = requests.get(
+  'https://api.sim.dune.com/v1/evm/balances/ADDRESS',
+  headers={'X-Sim-Api-Key': 'YOUR_API_KEY'}
+)
+```
+</CodeGroup>
+```
+
+### Code Block
+
+Syntax-highlighted code with language support.
+
+**Usage:**
+```mdx
+```javascript
+// JavaScript code example
+const apiKey = process.env.SIM_API_KEY;
+const response = await fetch(`https://api.sim.dune.com/v1/evm/balances/${address}`, {
+  headers: { 'X-Sim-Api-Key': apiKey }
+});
+```
+
+```typescript
+// TypeScript with type annotations
+interface Balance {
+  address: string;
+  amount: string;
+  symbol: string;
+  decimals: number;
+  value_usd: number;
+}
+```
+
+```bash
+# Shell commands
+npm install @sim/api-client
+export SIM_API_KEY="your_api_key_here"
+```
+```
+
+**Supported Languages:**
+- JavaScript/TypeScript
+- Python
+- Bash/Shell
+- JSON
+- SQL
+- Solidity
+- YAML
+- And many more...
+
+---
+
+## Media Components
+
+### Image
+
+Enhanced image component with optimization and styling.
+
+**Props:**
+- `src` (string): Image source URL
+- `alt` (string): Alt text for accessibility
+- `caption` (string): Image caption
+- `zoom` (boolean): Enable zoom functionality
+- `width` (string/number): Image width
+- `height` (string/number): Image height
+
+**Usage:**
+```mdx
+<!-- Basic image -->
+![API Dashboard](/images/dashboard.png)
+
+<!-- Image with caption -->
+<img src="/images/architecture.png" alt="System Architecture" />
+<caption>High-level system architecture diagram</caption>
+
+<!-- Styled image -->
+<img 
+  src="/images/example.png" 
+  alt="Example"
+  style={{ width: "100%", borderRadius: "8px" }}
+/>
+```
+
+### Video
+
+Video player component with controls.
+
+**Props:**
+- `src` (string): Video source URL
+- `controls` (boolean): Show video controls
+- `autoplay` (boolean): Auto-play video
+- `loop` (boolean): Loop video
+- `muted` (boolean): Mute video by default
+- `poster` (string): Poster image URL
+
+**Usage:**
+```mdx
+<video controls width="100%">
+  <source src="/videos/tutorial.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+<!-- Auto-playing background video -->
+<video autoplay muted loop poster="/images/poster.jpg">
+  <source src="/videos/background.mp4" type="video/mp4" />
+</video>
+```
+
+### Iframe
+
+Embedded iframe for external content.
+
+**Props:**
+- `src` (string): Iframe source URL
+- `title` (string): Iframe title for accessibility
+- `width` (string/number): Iframe width
+- `height` (string/number): Iframe height
+- `frameBorder` (string): Frame border style
+- `allow` (string): Iframe permissions
+
+**Usage:**
+```mdx
+<iframe 
+  src="https://example.com/demo" 
+  title="Interactive Demo"
+  width="100%" 
+  height="500px"
+  frameBorder="0"
+  allow="clipboard-write; encrypted-media"
+/>
+```
+
+---
+
+## Navigation Components
+
+### Breadcrumbs
+
+Automatically generated breadcrumb navigation.
+
+**Usage:**
+Breadcrumbs are automatically generated based on the page hierarchy and don't require manual implementation.
+
+### Table of Contents
+
+Automatically generated table of contents from page headings.
+
+**Usage:**
+The table of contents is automatically generated from H2 and H3 headings in your content.
+
+### Next/Previous Navigation
+
+Automatic navigation between pages based on the documentation structure.
+
+**Usage:**
+Next/Previous links are automatically generated based on the `docs.json` navigation structure.
+
+---
+
+## API Components
+
+### OpenAPI
+
+Renders interactive API documentation from OpenAPI specifications.
+
+**Props:**
+- `openapi` (string): Path to OpenAPI specification file
+- `operations` (array): Specific operations to display
+
+**Usage:**
+```mdx
+<!-- Full API documentation -->
+<OpenAPI openapi="openapi.json" />
+
+<!-- Specific operations only -->
+<OpenAPI 
+  openapi="openapi.json" 
+  operations={["getBalances", "getActivity"]} 
+/>
+```
+
+### Endpoint
+
+Documents a single API endpoint with request/response examples.
+
+**Props:**
+- `method` (string): HTTP method ('GET', 'POST', etc.)
+- `url` (string): Endpoint URL
+- `auth` (boolean): Whether authentication is required
+
+**Usage:**
+```mdx
+<Endpoint method="GET" url="/v1/evm/balances/{address}" auth>
+Get token balances for an EVM address.
+</Endpoint>
+```
+
+### Param
+
+Documents API parameters with types and descriptions.
+
+**Props:**
+- `name` (string): Parameter name
+- `type` (string): Parameter type
+- `required` (boolean): Whether parameter is required
+- `default` (string): Default value
+
+**Usage:**
+```mdx
+<Param name="address" type="string" required>
+The wallet address to query balances for.
+</Param>
+
+<Param name="limit" type="number" default="100">
+Maximum number of results to return.
+</Param>
+```
+
+---
+
+## Form Components
+
+### Input
+
+Text input field for interactive examples.
+
+**Props:**
+- `placeholder` (string): Placeholder text
+- `type` (string): Input type ('text', 'email', 'password', etc.)
+- `required` (boolean): Whether input is required
+- `value` (string): Default value
+
+**Usage:**
+```mdx
+<Input 
+  placeholder="Enter wallet address" 
+  type="text" 
+  required 
+/>
+```
+
+### Button
+
+Interactive button component.
+
+**Props:**
+- `variant` (string): Button style ('primary', 'secondary', 'outline')
+- `size` (string): Button size ('sm', 'md', 'lg')
+- `disabled` (boolean): Whether button is disabled
+- `onClick` (function): Click handler
+
+**Usage:**
+```mdx
+<Button variant="primary" size="md">
+  Get Balances
+</Button>
+
+<Button variant="outline" disabled>
+  Coming Soon
+</Button>
+```
+
+---
+
+## Styling and Customization
+
+### CSS Classes
+
+Common utility classes available for styling:
+
+```css
+/* Layout */
+.mx-auto          /* Center horizontally */
+.w-full           /* Full width */
+.h-screen         /* Full viewport height */
+
+/* Spacing */
+.p-4              /* Padding 1rem */
+.m-4              /* Margin 1rem */
+.mt-8             /* Margin top 2rem */
+
+/* Typography */
+.text-center      /* Center text */
+.text-lg          /* Large text */
+.font-bold        /* Bold font weight */
+
+/* Colors */
+.text-gray-500    /* Gray text */
+.bg-blue-100      /* Light blue background */
+.border-gray-200  /* Gray border */
+
+/* Responsive */
+.sm:hidden        /* Hide on small screens */
+.md:block         /* Show on medium+ screens */
+.lg:grid-cols-3   /* 3 columns on large screens */
+```
+
+### Custom Styling
+
+You can add custom styles using the `style` prop or CSS classes:
+
+```mdx
+<!-- Inline styles -->
+<div style={{ 
+  backgroundColor: '#f3f4f6', 
+  padding: '1rem', 
+  borderRadius: '8px' 
+}}>
+  Custom styled content
+</div>
+
+<!-- CSS classes -->
+<div className="bg-gray-100 p-4 rounded-lg border">
+  Content with utility classes
+</div>
+```
+
+### Dark Mode Support
+
+Components automatically adapt to dark mode. You can use dark mode specific classes:
+
+```mdx
+<div className="bg-white dark:bg-gray-800 text-black dark:text-white">
+  Content that adapts to theme
+</div>
+```
+
+---
+
+## Best Practices
+
+### Accessibility
+
+1. **Alt Text**: Always provide alt text for images
+2. **Semantic HTML**: Use appropriate HTML tags
+3. **Focus Management**: Ensure proper tab order
+4. **Screen Readers**: Test with screen reading software
+
+```mdx
+<!-- Good -->
+<img src="/diagram.png" alt="System architecture showing API flow" />
+
+<!-- Bad -->
+<img src="/diagram.png" alt="diagram" />
+```
+
+### Performance
+
+1. **Image Optimization**: Use optimized image formats
+2. **Lazy Loading**: Images load as needed
+3. **Code Splitting**: Large components are split automatically
+4. **Caching**: Static assets are cached effectively
+
+### Content Organization
+
+1. **Logical Hierarchy**: Use proper heading structure (H1 → H2 → H3)
+2. **Scannable Content**: Break up long text with headings and lists
+3. **Progressive Disclosure**: Use accordions for optional details
+4. **Clear Navigation**: Provide clear paths between related content
+
+### Mobile Responsiveness
+
+All components are mobile-responsive by default:
+
+```mdx
+<!-- Responsive card grid -->
+<CardGroup cols={1} colsMd={2} colsLg={3}>
+  <Card title="Mobile" />
+  <Card title="Tablet" />
+  <Card title="Desktop" />
+</CardGroup>
+```
+
+---
+
+## Component Examples
+
+### Complete Page Example
+
+```mdx
+---
+title: "API Guide"
+description: "Learn how to use our APIs effectively"
+---
+
+<Frame caption="API Overview">
+  <img src="/images/api-overview.png" alt="API Overview" />
+</Frame>
+
+## Quick Start
+
+<Steps>
+  <Step title="Get API Key">
+    <Card icon="key" title="Get Your Key" href="/auth">
+      Sign up and get your API key
+    </Card>
+  </Step>
+  
+  <Step title="Make First Request">
+    <CodeGroup>
+    ```bash cURL
+    curl -X GET "https://api.example.com/data" \
+         -H "Authorization: Bearer YOUR_KEY"
+    ```
+    
+    ```javascript JavaScript
+    const response = await fetch('https://api.example.com/data', {
+      headers: { 'Authorization': 'Bearer YOUR_KEY' }
+    });
+    ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+<Note>
+Remember to keep your API key secure and never expose it in client-side code.
+</Note>
+
+## Advanced Usage
+
+<Accordion title="Rate Limiting">
+Our API implements rate limiting to ensure fair usage:
+
+- 100 requests per minute for free tier
+- 1000 requests per minute for pro tier
+</Accordion>
+
+<CardGroup cols={2}>
+  <Card icon="book" title="Documentation" href="/docs">
+    Complete API reference
+  </Card>
+  <Card icon="code" title="Examples" href="/examples">
+    Code samples and tutorials
+  </Card>
+</CardGroup>
+```
+
+This comprehensive component reference provides everything you need to create engaging, accessible, and professional documentation using the Sim documentation system.
+
+---
+
+## Support and Resources
+
+<CardGroup cols={2}>
+  <Card icon="life-ring" title="Get Help" href="/support">
+    Need assistance with components?
+  </Card>
+  <Card icon="github" title="Contribute" href="https://github.com/duneanalytics">
+    Help improve our documentation
+  </Card>
+</CardGroup>
